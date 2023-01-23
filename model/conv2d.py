@@ -14,11 +14,11 @@ def conv(
     stride=1,
     actv=None,
     norm=None,
+    clamp=None,
     bias=True,
     padtype='zeros',
     scale_w=False,
     lr_mult=None,
-    clamp=None,
 ):
     actv = build_actv(actv)
     norm, norm_has_bias = build_conv2d_norm(norm, nc2)
