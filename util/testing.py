@@ -25,7 +25,8 @@ def assert_autoencode(model, shape, device='cuda', lr=1e-3):
     opt = torch.optim.SGD(model.parameters(), lr=lr)
     for _ in range(8):
         opt.zero_grad()
-        F.mse_loss(model(x), x.detach()).backward()
+        loss = F.mse_loss(model(x), x.detach())
+        loss.backward()
         opt.step()
 
     model.eval()

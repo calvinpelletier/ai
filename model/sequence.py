@@ -5,6 +5,8 @@ from ai.util import log2_diff
 
 
 def seq(*a):
+    if not a:
+        return nn.Identity()
     return nn.Sequential(*a)
 
 

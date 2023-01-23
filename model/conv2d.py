@@ -9,12 +9,14 @@ from ai.model.etc import resample, Clamp
 
 
 def conv(
-    nc1, nc2,
+    nc1,
+    nc2,
     k=3,
     stride=1,
     actv=None,
     norm=None,
     clamp=None,
+    noise=False,
     bias=True,
     padtype='zeros',
     scale_w=False,
@@ -29,7 +31,7 @@ def conv(
         seq.append(resample(stride))
 
     if scale_w or lr_mult is not None:
-        seq.append(_Conv2d(
+        seq.append(Conv2d(
             nc1, nc2,
             k=k,
             stride=max(1, stride),
@@ -50,6 +52,9 @@ def conv(
     if norm is not None:
         seq.append(norm)
 
+    if noise:
+        seq.append(Noise())
+
     if actv is not None:
         seq.append(actv)
 
@@ -61,7 +66,20 @@ def conv(
     return nn.Sequential(*seq)
 
 
-class _Conv2d(nn.Module):
+class Noise(nn.Module):
+    def __init__(s, mag=None):
+        super().__init__()
+        s._mag = nn.Parameter(torch.zeros([])) if mag is None else mag
+
+    def forward(s, x):
+        noise = torch.randn(
+            [x.shape[0], 1, x.shape[2], x.shape[3]],
+            device=x.device,
+        )
+        return x + s._mag * noise
+
+
+class Conv2d(nn.Module):
     def __init__(s,
         nc1,
         nc2,
