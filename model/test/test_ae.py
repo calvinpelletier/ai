@@ -32,4 +32,4 @@ class ImgAutoencoder(m.Model):
 
 def test_img_autoencoder():
     model = ImgAutoencoder(64, 4)
-    assert_autoencode(model, [8, 3, 64, 64], DEVICE)
+    assert_autoencode(model, [8, 3, 64, 64], DEVICE, lr=1e-2)

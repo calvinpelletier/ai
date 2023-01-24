@@ -11,6 +11,11 @@ def assert_shape(tensor, shape):
         assert list(tensor.shape) == list(shape)
 
 
+def assert_bounds(tensor, bounds):
+    assert torch.min(tensor) >= bounds[0]
+    assert torch.max(tensor) <= bounds[1]
+
+
 def assert_autoencode(model, shape, device='cuda', lr=1e-3):
     model.init().to(device)
     x = torch.randn(*shape).to(device)
