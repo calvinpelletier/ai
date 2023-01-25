@@ -34,12 +34,11 @@ class Dataset:
     def loader(s,
         batch_size,
         device='cuda',
-        shuffle=False,
-        infinite=False,
         n_workers=1,
+        train=False,
     ):
         return create_data_loader(_Dataset(s._data, s._preprocessor),
-            batch_size, device, shuffle, infinite, n_workers, s._postprocessor)
+            batch_size, device, train, train, n_workers, s._postprocessor)
 
     def _create_subdataset(s, subdata):
         return Dataset(subdata, s._preprocessor, s._postprocessor)

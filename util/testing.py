@@ -17,16 +17,14 @@ def assert_bounds(tensor, bounds):
 
 
 def assert_autoencode(model, shape, device='cuda', lr=1e-3):
-    model.init().to(device)
+    model.init().to(device).train()
     x = torch.randn(*shape).to(device)
 
-    model.eval()
     with torch.no_grad():
         y = model(x)
         assert_shape(y, shape)
         loss1 = F.mse_loss(y, x)
 
-    model.train()
     opt = torch.optim.SGD(model.parameters(), lr=lr)
     for _ in range(8):
         opt.zero_grad()
@@ -34,7 +32,6 @@ def assert_autoencode(model, shape, device='cuda', lr=1e-3):
         loss.backward()
         opt.step()
 
-    model.eval()
     with torch.no_grad():
         loss2 = F.mse_loss(model(x), x)
 
