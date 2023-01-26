@@ -2,7 +2,17 @@ from ai.train.hook import Hook
 from ai.util import Timer
 
 
-class Trainer:
+class _Base:
+    def _setup(s, hook, step, timelimit, steplimit):
+        if hook is None:
+            hook = Hook() # null ops
+        s._env.log = hook.log
+        timer = Timer(timelimit)
+        steplimit = math.inf if steplimit is None else step + steplimit
+        return hook, timer, steplimit
+
+
+class Trainer(_Base):
     def __init__(s, env, train_data, val_data=None):
         s._env = env
         s._train_data = train_data
@@ -16,12 +26,7 @@ class Trainer:
         timelimit=None,
         steplimit=None,
     ):
-        if hook is None:
-            hook = Hook()
-        s._env.log = hook.log
-
-        timer = Timer(timelimit)
-        steplimit = math.inf if steplimit is None else step + steplimit
+        hook, timer, steplimit = s._setup(hook, step, timelimit, steplimit)
 
         for batch in s._train_data:
             # pre step
@@ -44,8 +49,11 @@ class Trainer:
         hook.done()
         return step
 
+    def validate(s):
+        pass
 
-class MultiTrainer:
+
+class MultiTrainer(_Base):
     def __init__(s, env, train_data, val_data=None):
         s._env = env
         s._train_data = train_data
@@ -59,12 +67,7 @@ class MultiTrainer:
         timelimit=None,
         steplimit=None,
     ):
-        if hook is None:
-            hook = Hook()
-        s._env.log = hook.log
-
-        timer = Timer(timelimit)
-        steplimit = math.inf if steplimit is None else step + steplimit
+        hook, timer, steplimit = s._setup(hook, step, timelimit, steplimit)
 
         keys = models.keys()
         for batch in s._train_data:

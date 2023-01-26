@@ -21,9 +21,11 @@ class Gan(Env):
     # generator step
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def G(s, models, batch, step=0):
+        # main
         loss = s._g_main(models, batch)
         s.log('loss.G.main', loss)
 
+        # regularize
         if on_interval(step, s._g_reg_interval):
             reg_loss = s._g_reg(models, batch)
             s.log('loss.G.reg', reg_loss)
@@ -44,9 +46,11 @@ class Gan(Env):
     # discriminator step
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def D(s, models, batch, step=0):
+        # main
         loss = s._d_main(models, batch)
         s.log('loss.D.main', loss)
 
+        # regularize
         if on_interval(step, s._d_reg_interval):
             reg_loss = s._d_reg(models, batch)
             s.log('loss.D.reg', reg_loss)
@@ -57,8 +61,8 @@ class Gan(Env):
     def _d_main(s, models, batch):
         G, D = models['G'], models['D']
         g_out = s._generate(G, batch)
-        loss_fake = s._d_loss_fn(s._discriminate(D, g_out, detach=True), False)
-        loss_real = s._d_loss_fn(s._discriminate(D, batch, detach=True), True)
+        loss_fake = s._d_loss_fn(s._discriminate(D, g_out, True), False)
+        loss_real = s._d_loss_fn(s._discriminate(D, batch, True), True)
         return loss_fake + loss_real
 
     def _d_reg(s, models, batch):

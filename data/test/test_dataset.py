@@ -1,11 +1,11 @@
 import pytest
 
-from ai.data import img_dataset
+from ai.data import ImgDataset
 from ai.util import assert_shape, assert_bounds
 
 
 def test_ffhq_dataset():
-    ds = img_dataset('ffhq', imsize=64)
+    ds = ImgDataset('ffhq', imsize=64)
     _test_dataset(ds, 70_000, [3, 64, 64], [-1., 1.])
 
 

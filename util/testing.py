@@ -1,5 +1,13 @@
 import torch
 import torch.nn.functional as F
+import numpy as np
+
+
+def assert_equal(a, b):
+    a = a.detach().cpu().numpy()
+    b = b.detach().cpu().numpy()
+    assert a.shape == b.shape
+    assert np.isclose(a, b).all()
 
 
 def assert_shape(tensor, shape):

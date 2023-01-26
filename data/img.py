@@ -1,24 +1,35 @@
 from torchvision import datasets, transforms
 
-import ai
+from ai.path import dataset as dataset_path
+from ai.util import img as img_util
+from ai.data.dataset import Dataset
 
 
-def img_dataset(path, imsize):
-    # parse path to dataset
-    path = ai.path.dataset(path)
-    if not path.exists():
-        raise ValueError(f'missing dataset: {path}')
+class ImgDataset(Dataset):
+    def __init__(s, path, imsize):
+        # parse path to dataset
+        path = dataset_path(path)
+        if not path.exists():
+            raise ValueError(f'missing dataset: {path}')
 
-    # resize imgs if needed
-    dir = path / str(imsize)
-    if not dir.exists():
-        src_imsize = _choose_src_imsize(path, imsize)
-        print(src_imsize)
-        ai.util.img.resize_dir(path / str(src_imsize), dir, imsize)
+        # resize imgs if needed
+        dir = path / str(imsize)
+        if not dir.exists():
+            src_imsize = _choose_src_imsize(path, imsize)
+            img_util.resize_dir(
+                path / str(src_imsize) / 'data',
+                dir / 'data',
+                imsize,
+            )
 
-    # create dataset
-    paths = sorted(list(dir.iterdir()))
-    return ai.data.Dataset(paths, ai.util.img.read, ai.util.img.normalize)
+        # create dataset
+        super().__init__(
+            sorted(list((dir / 'data').iterdir())),
+            img_util.read,
+            img_util.normalize,
+        )
+
+        s.metadata_path = dir / 'metadata' # e.g. FID stats
 
 
 def _choose_src_imsize(path, target_imsize):

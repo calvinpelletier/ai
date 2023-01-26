@@ -4,7 +4,7 @@ from pathlib import Path
 
 from ai.train import Trainer, MultiTrainer
 from ai.train.env import Reconstruct
-from ai.data.img import img_dataset
+from ai.data.img import ImgDataset
 from ai.model.ae import ImgAutoencoder
 from ai.train.hook import Tensorboard
 from ai.train.gan import Gan
@@ -31,7 +31,7 @@ def _test_tensorboard_hook(path, train_fn):
 
 def _train(hook):
     env = Reconstruct()
-    data = img_dataset('ffhq', 64).loader(8, DEVICE, train=True)
+    data = ImgDataset('ffhq', 64).loader(8, DEVICE, train=True)
 
     model = ImgAutoencoder(64, 4).init().to(DEVICE)
     opt = torch.optim.SGD(model.parameters(), lr=1e-3)
@@ -41,7 +41,7 @@ def _train(hook):
 
 def _multitrain(hook):
     env = StyleGan()
-    data = img_dataset('ffhq', 64).loader(8, DEVICE, train=True)
+    data = ImgDataset('ffhq', 64).loader(8, DEVICE, train=True)
 
     models = {
         'G': Generator(64).init(),

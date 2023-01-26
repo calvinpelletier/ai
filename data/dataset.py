@@ -6,13 +6,15 @@ from ai.data.util import create_data_loader
 
 class Dataset:
     def __init__(s, data, preprocessor=None, postprocessor=None):
-        super().__init__()
         s._data = data
         s._preprocessor = preprocessor
         s._postprocessor = postprocessor
 
     def __len__(s):
         return len(s._data)
+
+    def length(s, batch_size):
+        return (len(s._data) // batch_size) * batch_size
 
     def split(s, *ratio):
         assert len(ratio) > 1
@@ -36,9 +38,18 @@ class Dataset:
         device='cuda',
         n_workers=1,
         train=False,
+        drop_last=True,
     ):
-        return create_data_loader(_Dataset(s._data, s._preprocessor),
-            batch_size, device, train, train, n_workers, s._postprocessor)
+        return create_data_loader(
+            _Dataset(s._data, s._preprocessor),
+            batch_size=batch_size,
+            device=device,
+            shuffle=train,
+            infinite=train,
+            drop_last=drop_last,
+            n_workers=n_workers,
+            postprocess=s._postprocessor,
+        )
 
     def _create_subdataset(s, subdata):
         return Dataset(subdata, s._preprocessor, s._postprocessor)

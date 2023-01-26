@@ -7,12 +7,14 @@ def create_data_loader(
     device='cuda',
     shuffle=False,
     infinite=False,
+    drop_last=True,
     n_workers=1,
     postprocess=None,
 ):
     loader_kwargs = {
         'batch_size': batch_size,
         'shuffle': shuffle,
+        'drop_last': drop_last,
         'num_workers': n_workers,
     }
     if device == 'cuda' or device.startswith('cuda:'):
