@@ -11,31 +11,37 @@ class Trainer:
     def train(s,
         model,
         opt,
-        hook=Hook(),
+        hook=None,
         step=0,
         timelimit=None,
         steplimit=None,
     ):
+        if hook is None:
+            hook = Hook()
+        s._env.log = hook.log
+
         timer = Timer(timelimit)
         steplimit = math.inf if steplimit is None else step + steplimit
 
         for batch in s._train_data:
-            # prep model
-            # (inside loop b/c hook might switch model to eval mode)
-            model.train()
+            # pre step
+            hook.pre_step(step)
+            model.train() # inside loop b/c hook might switch model to eval mode
 
-            # execute step
+            # step
             opt.zero_grad()
             loss = s._env(model, batch, step)
             loss.backward()
             opt.step()
 
-            # call hook, possibly stop training
-            stop = hook.step(step, loss)
+            # post step
+            hook.log('loss', loss)
+            stop = hook.post_step()
             step += 1
             if stop or timer() or (step >= steplimit):
                 break
 
+        hook.done()
         return step
 
 
@@ -48,24 +54,27 @@ class MultiTrainer:
     def train(s,
         models,
         opts,
-        hook=Hook(),
+        hook=None,
         step=0,
         timelimit=None,
         steplimit=None,
     ):
+        if hook is None:
+            hook = Hook()
+        s._env.log = hook.log
+
         timer = Timer(timelimit)
         steplimit = math.inf if steplimit is None else step + steplimit
 
         keys = models.keys()
         for batch in s._train_data:
-            # prep models
-            # (inside loop b/c hook might switch model to eval mode)
+            # pre step
+            hook.pre_step(step)
             for model in models.values():
                 model.train()
                 model.set_req_grad(False)
 
-            # execute one step per model
-            losses = {}
+            # step each model ~
             for key in keys:
                 model = models[key]
                 opt = opts[key]
@@ -77,12 +86,14 @@ class MultiTrainer:
                 opt.step()
                 model.set_req_grad(False)
 
-                losses[key] = loss
+                hook.log(f'loss.{key}', loss)
+            # ~
 
-            # call hook, possibly stop training
-            stop = hook.step(step, loss)
+            # post step
+            stop = hook.post_step()
             step += 1
             if stop or timer() or (step >= steplimit):
                 break
 
+        hook.done()
         return step

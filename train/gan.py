@@ -1,10 +1,11 @@
 import torch
 import torch.nn.functional as F
 
+from ai.train.env import Env
 from ai.train.util import on_interval
 
 
-class Gan:
+class Gan(Env):
     def __init__(s,
         aug=None,
         g_reg_interval=None,
@@ -12,6 +13,7 @@ class Gan:
         d_reg_interval=16,
         d_reg_weight=1.,
     ):
+        super().__init__()
         s._aug = aug
         s._g_reg_interval, s._g_reg_weight = g_reg_interval, g_reg_weight
         s._d_reg_interval, s._d_reg_weight = d_reg_interval, d_reg_weight
@@ -20,8 +22,13 @@ class Gan:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def G(s, models, batch, step=0):
         loss = s._g_main(models, batch)
+        s.log('loss.G.main', loss)
+
         if on_interval(step, s._g_reg_interval):
-            loss += s._g_reg(models, batch) * s._g_reg_weight
+            reg_loss = s._g_reg(models, batch)
+            s.log('loss.G.reg', reg_loss)
+            loss += reg_loss * s._g_reg_weight
+
         return loss
 
     def _g_main(s, models, batch):
@@ -38,8 +45,13 @@ class Gan:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def D(s, models, batch, step=0):
         loss = s._d_main(models, batch)
+        s.log('loss.D.main', loss)
+
         if on_interval(step, s._d_reg_interval):
-            loss += s._d_reg(models, batch) * s._d_reg_weight
+            reg_loss = s._d_reg(models, batch)
+            s.log('loss.D.reg', reg_loss)
+            loss += reg_loss * s._d_reg_weight
+
         return loss
 
     def _d_main(s, models, batch):
