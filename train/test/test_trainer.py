@@ -9,7 +9,7 @@ from ai.model.ae import ImgAutoencoder
 DEVICE = 'cuda'
 
 
-def test_reconstruction_training():
+def test_reconstruction():
     _test_trainer(
         Reconstruct(),
         img_dataset('ffhq', 64),
