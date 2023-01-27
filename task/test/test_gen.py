@@ -11,7 +11,7 @@ DEVICE = 'cuda'
 @pytest.mark.filterwarnings('ignore:invalid value encountered')
 def test_img_gen_task():
     ds = ImgDataset('ffhq', 64)
-    task = ImgGenTask(ds, DEVICE, 256)
+    task = ImgGenTask(ds, device=DEVICE, n_imgs=256)
     gen = Generator(64).init()
     fid = task(gen)
     print(fid)

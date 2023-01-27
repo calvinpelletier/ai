@@ -16,7 +16,7 @@ def test_gan():
         ImgDataset('ffhq', 64),
         {
             'G': Generator(64).init(),
-            'D': Discriminator(64),
+            'D': Discriminator(64).init(),
         },
         DEVICE,
     )
@@ -28,7 +28,7 @@ def test_stylegan():
         ImgDataset('ffhq', 64),
         {
             'G': Generator(64).init(),
-            'D': Discriminator(64),
+            'D': Discriminator(64).init(),
         },
         DEVICE,
     )

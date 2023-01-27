@@ -6,7 +6,8 @@ from ai.train import Trainer, MultiTrainer
 from ai.train.env import Reconstruct
 from ai.data.img import ImgDataset
 from ai.model.ae import ImgAutoencoder
-from ai.train.hook import Tensorboard
+from ai.train.log import Tensorboard
+from ai.train.hook import Hook
 from ai.train.gan import Gan
 from ai.examples.stylegan2.model import Generator, Discriminator
 from ai.examples.stylegan2.train import StyleGan
@@ -24,7 +25,7 @@ def test_tensorboard_hook():
 def _test_tensorboard_hook(path, train_fn):
     if path.exists():
         rmtree(path)
-    hook = Tensorboard(path)
+    hook = Hook(Tensorboard(path))
     train_fn(hook)
     assert path.exists()
 

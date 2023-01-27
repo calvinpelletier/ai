@@ -1,11 +1,13 @@
-from ai.train.hook import Hook
+import math
+
+from ai.train.hook import NullHook
 from ai.util import Timer
 
 
 class _Base:
     def _setup(s, hook, step, timelimit, steplimit):
         if hook is None:
-            hook = Hook() # null ops
+            hook = NullHook()
         s._env.log = hook.log
         timer = Timer(timelimit)
         steplimit = math.inf if steplimit is None else step + steplimit
@@ -30,7 +32,7 @@ class Trainer(_Base):
 
         for batch in s._train_data:
             # pre step
-            hook.pre_step(step)
+            hook.pre_step(step, model, opt)
             model.train() # inside loop b/c hook might switch model to eval mode
 
             # step
@@ -72,7 +74,7 @@ class MultiTrainer(_Base):
         keys = models.keys()
         for batch in s._train_data:
             # pre step
-            hook.pre_step(step)
+            hook.pre_step(step, models, opts)
             for model in models.values():
                 model.train()
                 model.set_req_grad(False)

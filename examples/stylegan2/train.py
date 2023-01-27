@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-from ai.train import Gan
+from ai.train import Gan, MultiTrainer
 
 
 class StyleGan(Gan):

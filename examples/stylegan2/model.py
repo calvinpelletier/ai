@@ -5,7 +5,7 @@ from ai.util import log2_diff
 
 
 class Generator(m.Model):
-    def __init__(s, imsize, z_dim=512, nc_min=32, nc_max=512):
+    def __init__(s, imsize, z_dim=512, nc_min=32, nc_max=512, f_n_layers=8):
         super().__init__()
 
         # expose z_dim so external code can sample the latent space
@@ -15,7 +15,7 @@ class Generator(m.Model):
         s.g = SynthesisNetwork(imsize, z_dim, nc_min, nc_max)
 
         # latent vector (z) -> disentangled latent vector (w)
-        s.f = MappingNetwork(z_dim, len(s.g.blocks) * 2)
+        s.f = MappingNetwork(z_dim, len(s.g.blocks) * 2, n_layers=f_n_layers)
 
     def forward(s, z, trunc=1):
         w = s.f(z, trunc=trunc)
