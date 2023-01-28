@@ -1,3 +1,5 @@
+'''fully connected layers'''
+
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -15,6 +17,39 @@ def fc(
     scale_w=False,
     lr_mult=None,
 ):
+    '''fully connected layer
+
+    input
+        tensor[b, <n1>]
+    output
+        tensor[b, <n2>]
+
+    operations in order:
+        linear
+            either:
+                torch.nn.Linear
+            or:
+                a custom implementation that can handle learning rate
+                multiplying, scaling weights, and initializing bias
+        activation function
+
+    args
+        n1 : int
+            input size
+        n2 : int
+            output size
+        actv : str or null
+            activation (see model/actv.py)
+        bias : bool
+            enable bias in linear op (default true)
+        bias_init : float or null
+            optional initial value for bias
+        scale_w : bool
+            if enabled, scale weights by 1/sqrt(n1)
+        lr_mult : float or None
+            learning rate multiplier (scale weights and bias)
+    '''
+
     if scale_w or lr_mult is not None or bias_init is not None:
         linear = Linear(n1, n2, bias, bias_init, scale_w, lr_mult)
     else:
@@ -34,6 +69,21 @@ class Linear(nn.Module):
         scale_w=False,
         lr_mult=None,
     ):
+        '''
+        n1 : int
+            input size
+        n2 : int
+            output size
+        bias : bool
+            enable bias (default true)
+        bias_init : float or null
+            optional initial value for bias
+        scale_w : bool
+            if enabled, scale weights by 1/sqrt(n1)
+        lr_mult : float or None
+            learning rate multiplier (scale weights and bias)
+        '''
+
         super().__init__()
         if lr_mult is None:
             lr_mult = 1.

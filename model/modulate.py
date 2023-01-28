@@ -1,3 +1,5 @@
+'''modulated convolutions'''
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -24,6 +26,51 @@ def modconv(
     scale_w=False,
     lr_mult=None,
 ):
+    '''modulated convolution
+
+    input
+        x : tensor[b, <nc1>, h, w]
+        z : tensor[b, <z_dim>]
+    output
+        tensor[b, <nc2>, h*, w*] where h* = h / <stride>
+
+    nc1 : int
+        number of input channels
+    nc2 : int
+        number of output channels
+    z_dim : int
+        size of modulating vector
+    modtype : str
+        "adalin" (default)
+            adaptive layer-instance normalization (see paper "U-GAT-IT:
+            Unsupervised Generative Attentional Networks with Adaptive
+            Layer-Instance Normalization for Image-to-Image Translation")
+        "weight"
+            weight modulation (see paper "Analyzing and Improving the Image
+            Quality of StyleGAN")
+    k : int
+        kernel size
+        TODO: support k!=3 for "weight" modtype
+    stride : int or float
+        for strides < 1 (i.e. an up convolution), the input is first resized
+        by a scale factor of 1/stride before using a conv of stride=1
+    actv : str or null
+        activation (see model/actv.py)
+    clamp : float or null
+        clamp all output values between [-clamp, clamp]
+    noise : bool
+        add random noise [b, 1, h, w] of learnable magnitude
+    padtype : str
+        "zeros", "reflect", etc.
+        TODO: support padtype!="zeros" for "weight" modtype
+    scale_w : bool
+        if enabled, scale conv weights by 1/sqrt(nc1 * k**2)
+        TODO: support scale_w for "weight" modtype
+    lr_mult : float or None
+        learning rate multiplier (scale conv weights and bias)
+        TODO: support lr_mult for "weight" modtype
+    '''
+
     if modtype == 'adalin':
         return NormModConv(AdaLIN, nc1, nc2, z_dim, k, stride, actv, clamp,
             noise, padtype, scale_w, lr_mult)
@@ -39,6 +86,15 @@ def modconv(
 
 
 class NormModConv(nn.Module):
+    '''modulate a convolution by modulating the normalization that follows it
+
+    input
+        x : tensor[b, <nc1>, h, w]
+        z : tensor[b, <z_dim>]
+    output
+        tensor[b, <nc2>, h*, w*] where h* = h / <stride>
+    '''
+
     def __init__(s,
         Norm,
         nc1,
@@ -53,6 +109,12 @@ class NormModConv(nn.Module):
         scale_w=False,
         lr_mult=None,
     ):
+        '''
+        Norm : class
+            norm = Norm(<nc2>, <z_dim>)
+        (see modconv)
+        '''
+
         super().__init__()
 
         s._conv = conv(
@@ -85,6 +147,15 @@ class NormModConv(nn.Module):
 
 
 class WeightModConv(nn.Module):
+    '''modulated convolution from stylegan2
+
+    input
+        x : tensor[b, <nc1>, h, w]
+        z : tensor[b, <z_dim>]
+    output
+        tensor[b, <nc2>, h*, w*] where h* = h / <stride>
+    '''
+
     def __init__(s,
         nc1,
         nc2,
@@ -94,6 +165,24 @@ class WeightModConv(nn.Module):
         clamp=None,
         noise=False,
     ):
+        '''
+        nc1 : int
+            number of input channels
+        nc2 : int
+            number of output channels
+        z_dim : int
+            size of modulating vector
+        stride : int or float
+            stride must be >=1 or ==0.5
+            TODO: option for resampling instead of transposed conv
+        actv : str or null
+            activation (see model/actv.py)
+        clamp : float or null
+            clamp all output values between [-clamp, clamp]
+        noise : bool
+            add random noise [b, 1, h, w] of learnable magnitude
+        '''
+
         super().__init__()
         assert stride >= 1 or stride == .5
         s._stride = stride

@@ -11,6 +11,24 @@ def create_data_loader(
     n_workers=1,
     postprocess=None,
 ):
+    '''
+    data : torch.utils.data.Dataset
+    batch_size : int
+    device : str
+    shuffle : bool
+    infinite : bool
+        wrap loader in an infinite loop
+    drop_last : bool
+        drop last batch if incomplete
+    n_workers : int
+    postprocessor : callable or null
+        a function called after the data has been transfered to the device
+        args
+            tensor or list/dict of tensors
+        returns
+            tensor or list/dict of tensors
+    '''
+
     loader_kwargs = {
         'batch_size': batch_size,
         'shuffle': shuffle,

@@ -1,3 +1,5 @@
+'''activation functions'''
+
 from torch import nn
 
 
@@ -12,6 +14,12 @@ ACTIVATIONS = {
 }
 
 def build_actv(actv):
+    '''string-to-module for activation functions
+
+    actv : string
+        see ACTIVATIONS for possible values
+    '''
+
     if actv is None:
         return None
     if actv not in ACTIVATIONS:

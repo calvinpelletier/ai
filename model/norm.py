@@ -1,3 +1,5 @@
+'''normalizations'''
+
 import torch
 from torch import nn
 
@@ -11,6 +13,19 @@ CONV2D_NORMS = {
 }
 
 def build_conv2d_norm(norm, nc):
+    '''string-to-module for conv2d normalizations
+
+    input
+        tensor[b, <nc>, h, w]
+    output
+        tensor[b, <nc>, h, w]
+
+    args
+        norm : string
+            see CONV2D_NORMS for possible values
+        nc : int
+            number of input channels
+    '''
     if norm is None:
         return None, False
     cls, norm_has_bias = CONV2D_NORMS[norm]
@@ -18,7 +33,28 @@ def build_conv2d_norm(norm, nc):
 
 
 class AdaLIN(nn.Module):
+    '''adaptive layer-instance normalization
+
+    see paper "U-GAT-IT: Unsupervised Generative Attentional Networks with
+    Adaptive Layer-Instance Normalization for Image-to-Image Translation"
+
+    input
+        x : tensor[b, <nc>, h, w]
+        z : tensor[b, <z_dim>]
+    output
+        tensor[b, <nc>, h, w]
+    '''
+
     def __init__(s, nc, z_dim, eps=1e-5):
+        '''
+        nc : int
+            number of input channels
+        z_dim : int
+            size of modulating vector
+        eps : float
+            epsilon
+        '''
+
         super().__init__()
         s._eps = eps
         s._rho = nn.Parameter(torch.full([1, nc, 1, 1], 0.9))

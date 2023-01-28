@@ -1,3 +1,5 @@
+'''functional operations'''
+
 import torch
 import torch.nn.functional as F
 
@@ -5,6 +7,8 @@ import torch.nn.functional as F
 ALIGN_CORNERS_MODES = ['linear', 'bilinear', 'trilinear', 'bicubic']
 
 def resample(x, stride, mode='bilinear'):
+    '''resample x by scale factor of 1/stride'''
+
     return F.interpolate(
         x,
         scale_factor=1 / stride,

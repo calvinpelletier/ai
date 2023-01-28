@@ -6,7 +6,25 @@ from ai.data.dataset import Dataset
 
 
 class ImgDataset(Dataset):
+    '''dataset of images
+
+    file structure:
+    <path>/<imsize>/data/*.png (image files)
+    <path>/<imsize>/metadata/* (e.g. FID stats)
+    '''
+
     def __init__(s, path, imsize):
+        '''
+        path : str
+            if path starts with /
+                exact path to dataset root
+            else
+                relative path from AI_DATASETS_PATH environment variable
+        imsize : int
+            target image size (if <path>/<imsize> doesnt exist, it will be
+            created by resizing an existing image size)
+        '''
+
         # parse path to dataset
         path = dataset_path(path)
         if not path.exists():

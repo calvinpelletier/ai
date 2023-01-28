@@ -1,3 +1,5 @@
+'''2d convolutions'''
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -22,6 +24,58 @@ def conv(
     scale_w=False,
     lr_mult=None,
 ):
+    '''a Conv2d operation and optional additional ops in sequence
+
+    input
+        tensor[b, <nc1>, h, w]
+    output
+        tensor[b, <nc2>, h*, w*] where h* = h / <stride>
+
+    operations in order:
+        resample
+            for strides < 1
+        convolution
+            either:
+                torch.nn.Conv2d
+            or:
+                a custom implementation that can handle learning rate
+                multipliers and scaling weights
+        normalization
+        noise
+        activation function
+        clamp
+
+    nc1 : int
+        number of input channels
+    nc2 : int
+        number of output channels
+    k : int
+        kernel size
+    stride : int or float
+        for strides < 1 (i.e. an up convolution), the input is first resized by
+        a scale factor of 1/stride before using a conv of stride=1.
+        TODO: allow option for transposed convs instead
+    actv : str or null
+        activation (see model/actv.py)
+    norm : str or null
+        normalization (see model/norm.py)
+    clamp : float or null
+        clamp all output values between [-clamp, clamp]
+    noise : bool
+        add noise [b, 1, h, w] multiplied by a learnable magnitude
+        NOTE: this is not for preventing overfitting
+        TODO: add option for a fixed magnitude
+    bias : bool
+        enable bias in conv (default true)
+        NOTE: if norm has a learnable bias, the conv bias is disabled regardless
+    padtype : str
+        "zeros", "reflect", etc.
+    scale_w : bool
+        if enabled, scale conv weights by 1/sqrt(nc1 * k**2)
+    lr_mult : float or None
+        learning rate multiplier (scale conv weights and bias)
+    '''
+
     actv = build_actv(actv)
     norm, norm_has_bias = build_conv2d_norm(norm, nc2)
 
@@ -67,7 +121,14 @@ def conv(
 
 
 class Noise(nn.Module):
+    '''add random noise to a feature map'''
+
     def __init__(s, mag=None):
+        '''
+        mag : float or null
+            noise multiplier. if null, it is learnable (initalized at 0)
+        '''
+
         super().__init__()
         s._mag = nn.Parameter(torch.zeros([])) if mag is None else mag
 
@@ -80,6 +141,8 @@ class Noise(nn.Module):
 
 
 class Conv2d(nn.Module):
+    '''2d conv operation that can scale weights and bias'''
+
     def __init__(s,
         nc1,
         nc2,
@@ -89,6 +152,22 @@ class Conv2d(nn.Module):
         scale_w=False,
         lr_mult=None,
     ):
+        '''
+        nc1 : int
+            number of input channels
+        nc2 : int
+            number of output channels
+        k : int
+            kernel size
+        stride : int
+        bias : bool
+            enable bias
+        scale_w : bool
+            if enabled, scale conv weights by 1/sqrt(nc1 * k**2)
+        lr_mult : float or null
+            learning rate multiplier
+        '''
+
         super().__init__()
         if lr_mult is None:
             lr_mult = 1.

@@ -3,6 +3,12 @@ from torch import nn
 
 
 def resample(stride):
+    '''resize a feature map by scale factor of 1/stride
+
+    stride : int or float
+        inverse of the scale factor
+    '''
+
     if stride > 1:
         return nn.AvgPool2d(stride)
     elif stride < 1:
@@ -11,11 +17,21 @@ def resample(stride):
 
 
 def global_avg():
+    '''feature map [b, c, h, w] -> global spatial average [b, c, 1, 1]'''
+
     return nn.AdaptiveAvgPool2d(1)
 
 
 class Residual(nn.Module):
+    '''main operation plus a shortcut around it'''
+
     def __init__(s, main, shortcut=None):
+        '''
+        main : module
+        shortcut : module or null
+            if null, the residual is simply the input
+        '''
+
         super().__init__()
         s._main = main
         s._shortcut = shortcut
@@ -30,6 +46,11 @@ def res(*a, **kw):
 
 class Clamp(nn.Module):
     def __init__(s, val):
+        '''
+        val : float or null
+            clamp all output values between [-val, val]
+        '''
+
         super().__init__()
         s._val = val
 
@@ -42,6 +63,12 @@ def clamp(*a, **kw):
 
 class Flatten(nn.Module):
     def __init__(s, keep_batch_dim=True):
+        '''
+        keep_batch_dim : bool
+            if true (default), [bs, ...] to [bs, n]
+            else, [...] to [n]
+        '''
+
         super().__init__()
         s._keep_batch_dim = keep_batch_dim
 
