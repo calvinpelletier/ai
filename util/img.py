@@ -32,6 +32,16 @@ def _to_pil(tensor):
     return Image.fromarray(np.transpose(tensor, (1, 2, 0)), 'RGB')
 
 
+def resize(tensor, size, mode='bilinear', align_corners=True):
+    assert tensor.shape[-1] == tensor.shape[-2], 'TODO: resize non-square img'
+    return torch.nn.functional.interpolate(
+        tensor,
+        size=(size, size),
+        mode='bilinear',
+        align_corners=align_corners,
+    )
+
+
 def resize_dir(src, dest, imsize):
     dest.mkdir()
     for path in tqdm(list(src.iterdir())):

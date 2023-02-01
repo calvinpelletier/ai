@@ -68,7 +68,7 @@ class Dataset:
 
     def sample(s, n, device='cuda'):
         '''get n samples
-         
+
         args
             n : int
                 number of samples

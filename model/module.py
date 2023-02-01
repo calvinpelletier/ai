@@ -77,11 +77,11 @@ class Model(torch.nn.Module):
             param.requires_grad = req_grad
 
 
+# alias
 class Module(torch.nn.Module):
-    '''alias'''
     pass
 
 
+# alias
 def modules(x):
-    '''alias'''
     return torch.nn.ModuleList(x)

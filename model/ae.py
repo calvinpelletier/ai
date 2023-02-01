@@ -1,5 +1,3 @@
-'''autoencoders'''
-
 import ai.model as m
 
 

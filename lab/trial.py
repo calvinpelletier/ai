@@ -3,18 +3,28 @@ from shutil import rmtree
 
 from ai.train.log import Tensorboard
 from ai.path import lab as lab_path
+from ai.train.hook import Hook
 
 
 class Trial:
-    def __init__(s, path, clean=False, Log=Tensorboard):
+    def __init__(s, path, clean=False, log=Tensorboard):
         s.path = lab_path(path)
-        if clean:
+        if clean and s.path.exists():
             rmtree(s.path)
         s.path.mkdir(parents=True, exist_ok=True)
 
-        s.log = Log(s.path / 'log')
+        s.log = log(s.path / 'log')
+
+    def hook(s, snapshot=True):
+        hook = Hook(s.log)
+        if snapshot:
+            hook.add(s.save_snapshot)
+        return hook
 
     def save_snapshot(s, step, model, opt):
+        if step == 0:
+            return
+
         path = s.path / 'snapshots/latest'
         path.mkdir(parents=True, exist_ok=True)
 
