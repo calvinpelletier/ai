@@ -1,11 +1,9 @@
 import pytest
 
+from ai.testing import DEVICE
 from ai.data.img import ImgDataset
 from ai.task import ImgGenTask
 from ai.examples.stylegan2.model import Generator
-
-
-DEVICE = 'cuda'
 
 
 @pytest.mark.filterwarnings('ignore:invalid value encountered')

@@ -1,8 +1,6 @@
 from ai.model.ae import ImgAutoencoder
+from ai.testing import DEVICE
 from ai.util import assert_autoencode
-
-
-DEVICE = 'cuda'
 
 
 def test_img_autoencoder():

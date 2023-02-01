@@ -1,8 +1,6 @@
 import ai.model as m
+from ai.testing import DEVICE
 from ai.util import assert_autoencode
-
-
-DEVICE = 'cuda'
 
 
 def test_conv2d():

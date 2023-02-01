@@ -13,6 +13,9 @@ class _Base:
         steplimit = math.inf if steplimit is None else step + steplimit
         return hook, timer, steplimit
 
+    def _post_step(s, step, model, opt, hook):
+        return hook.post_step()
+
 
 class Trainer(_Base):
     def __init__(s, env, train_data, val_data=None):
@@ -43,7 +46,7 @@ class Trainer(_Base):
 
             # post step
             hook.log('loss', loss)
-            stop = hook.post_step()
+            stop = s._post_step(step, model, opt, hook)
             step += 1
             if stop or timer() or (step >= steplimit):
                 break
@@ -95,7 +98,7 @@ class MultiTrainer(_Base):
             # ~
 
             # post step
-            stop = hook.post_step()
+            stop = s._post_step(step, model, opt, hook)
             step += 1
             if stop or timer() or (step >= steplimit):
                 break

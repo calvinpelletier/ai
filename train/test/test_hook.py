@@ -2,6 +2,7 @@ import torch
 from shutil import rmtree
 from pathlib import Path
 
+from ai.testing import DEVICE
 from ai.train import Trainer, MultiTrainer
 from ai.train.env import Reconstruct
 from ai.data.img import ImgDataset
@@ -13,7 +14,6 @@ from ai.examples.stylegan2.model import Generator, Discriminator
 from ai.examples.stylegan2.train import StyleGan
 
 
-DEVICE = 'cuda'
 TENSORBOARD_PATH = Path('/tmp/ai/tensorboard')
 
 
@@ -41,7 +41,7 @@ def _train(hook):
 
 
 def _multitrain(hook):
-    env = StyleGan()
+    env = StyleGan(StyleGan.TEST)
     data = ImgDataset('ffhq', 64).loader(8, DEVICE, train=True)
 
     models = {

@@ -1,0 +1,45 @@
+device: 'cuda'
+
+data:
+  dataset: 'ffhq'
+  imsize: 256
+
+model:
+  G:
+    z_dim: 512
+    g:
+      nc_min: 32
+      nc_max: 512
+    f:
+      n_layers: 8
+  D:
+    nc_min: 32
+    nc_max: 512
+
+opt:
+  G:
+    type: 'adam'
+    lr: 0.0025
+  D:
+    type: 'adam'
+    lr: 0.0025
+
+train:
+  bs: 16
+  n_data_workers: 2
+  style_mix_prob: .9
+  G:
+    reg:
+      interval: 4
+      weight: 2.
+      batch_shrink: 2
+      decay: 0.01
+  D:
+    reg:
+      interval: 16
+      weight: 1.
+
+task:
+  bs: 64
+  n_workers: 8
+  n_imgs: 10_000

@@ -1,0 +1,23 @@
+player:
+  n_mcts_sims: 8
+  greedy_ply: 32
+
+opt:
+  type: 'adam'
+  lr: .001
+
+train:
+  device: 'cuda:0'
+  bs: 16
+  refresh: 100
+  loss:
+    v_weight: 1.
+
+inference:
+  device: 'cuda:1'
+  bs: 64
+
+data:
+  n_workers: 8
+  buf_size: 32
+  n_replay_times: 2

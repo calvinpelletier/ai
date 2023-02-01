@@ -1,12 +1,10 @@
 import torch
 
+from ai.testing import DEVICE
 from ai.train import Trainer
 from ai.train.env import Reconstruct
 from ai.data.img import ImgDataset
 from ai.model.ae import ImgAutoencoder
-
-
-DEVICE = 'cuda'
 
 
 def test_reconstruction():

@@ -12,7 +12,7 @@ def create_data_loader(
     postprocess=None,
 ):
     '''
-    data : torch.utils.data.Dataset
+    data : torch.utils.data.(Dataset or IterableDataset)
     batch_size : int
     device : str
     shuffle : bool
@@ -32,7 +32,7 @@ def create_data_loader(
     loader_kwargs = {
         'batch_size': batch_size,
         'shuffle': shuffle,
-        'drop_last': drop_last,
+        'drop_last': drop_last if batch_size is not None else False,
         'num_workers': n_workers,
     }
     if device == 'cuda' or device.startswith('cuda:'):

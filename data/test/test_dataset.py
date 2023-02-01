@@ -1,5 +1,6 @@
 import pytest
 
+from ai.testing import DEVICE
 from ai.data import ImgDataset
 from ai.util import assert_shape, assert_bounds
 
@@ -19,11 +20,11 @@ def _test_dataset(ds, size, shape, bounds):
     with pytest.raises(ValueError):
         ds.split(.1, .2, .3)
 
-    samples = val_ds.sample(8)
+    samples = val_ds.sample(8, DEVICE)
     assert_shape(samples, [8] + shape)
     assert_bounds(samples, bounds)
 
-    loader = train_ds.loader(8)
+    loader = train_ds.loader(8, DEVICE)
     batch = next(loader)
     assert_shape(batch, [8] + shape)
     assert_bounds(batch, bounds)

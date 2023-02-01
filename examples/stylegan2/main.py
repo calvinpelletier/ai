@@ -1,70 +1,12 @@
 import torch
+from pathlib import Path
 
 import ai
 from ai.examples.stylegan2.model import Generator, Discriminator
 from ai.examples.stylegan2.train import StyleGan
 
 
-def config(override={}):
-    return ai.Config({
-        'device': 'cuda',
-
-        ## data
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        'data.dataset': 'ffhq',
-        'data.imsize': 256,
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        ## model
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        # generator
-        'model.G.z_dim': 512,
-        'model.G.g.nc_min': 32,
-        'model.G.g.nc_max': 512,
-        'model.G.f.n_layers': 8,
-
-        # discriminator
-        'model.D.nc_min': 32,
-        'model.D.nc_max': 512,
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        ## opt
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        # generator
-        'opt.G.type': 'adam',
-        'opt.G.lr': 0.0025,
-
-        # discriminator
-        'opt.D.type': 'adam',
-        'opt.D.lr': 0.0025,
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        ## train
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        'train.bs': 16,
-        'train.n_data_workers': 2,
-        'train.timelimit': None,
-        'train.steplimit': None,
-        'train.style_mix_prob': .9,
-
-        # generator
-        'train.G.reg.interval': 4,
-        'train.G.reg.weight': 2.,
-        'train.G.reg.batch_shrink': 2,
-        'train.G.reg.decay': 0.01,
-
-        # discriminator
-        'train.D.reg.interval': 16,
-        'train.D.reg.weight': 1.,
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        ## task
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        'task.bs': 64,
-        'task.n_workers': 8,
-        'task.n_imgs': 10_000,
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    }, override)
+BASE_CONFIG_PATH = Path(__file__).parent / 'config.yaml'
 
 
 class Trial(ai.lab.Trial):
@@ -83,11 +25,11 @@ class Trial(ai.lab.Trial):
         )
 
 
-def run(path, **kw):
-    cfg = config(kw)
+def run(output_path, **kw):
+    cfg = ai.Config(BASE_CONFIG_PATH, override=kw)
     print(cfg)
 
-    trial = Trial(path, cfg, clean=True)
+    trial = Trial(output_path, cfg, clean=True)
     print(f'path: {trial.path}')
 
     ds = ai.data.ImgDataset(cfg.data.dataset, cfg.data.imsize)
@@ -100,12 +42,11 @@ def run(path, **kw):
     }
 
     opts = {
-        'G': ai.build_opt(cfg.opt.G, models['G']),
-        'D': ai.build_opt(cfg.opt.D, models['D']),
+        'G': ai.opt.build(cfg.opt.G, models['G']),
+        'D': ai.opt.build(cfg.opt.D, models['D']),
     }
 
-    hook = ai.train.Hook(trial.log)
-    hook.add(trial.save_snapshot)
+    hook = trial.hook(snapshot=True)
     hook.add(trial.save_samples)
     hook.add(lambda step, models, opts: task(models['G'], step))
 
@@ -114,30 +55,14 @@ def run(path, **kw):
 
 def _train(cfg, ds, models, opts, hook, step=0):
     ai.train.MultiTrainer(
-        StyleGan(
-            aug=None, # TODO: ada
-            g_reg_interval=cfg.train.G.reg.interval,
-            g_reg_weight=cfg.train.G.reg.weight,
-            d_reg_interval=cfg.train.D.reg.interval,
-            d_reg_weight=cfg.train.D.reg.weight,
-            style_mix_prob=cfg.train.style_mix_prob,
-            pl_batch_shrink=cfg.train.G.reg.batch_shrink,
-            pl_decay=cfg.train.G.reg.decay,
-        ),
+        StyleGan(cfg.train),
         ds.loader(
             cfg.train.bs,
             cfg.device,
             cfg.train.n_data_workers,
             train=True,
         ),
-    ).train(
-        models,
-        opts,
-        hook=hook,
-        step=step,
-        timelimit=cfg.train.timelimit,
-        steplimit=cfg.train.steplimit,
-    )
+    ).train(models, opts, hook, step=step)
 
 
 def _task(ds, log, device, cfg):
