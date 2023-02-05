@@ -2,6 +2,7 @@ import math
 
 from ai.train.hook import NullHook
 from ai.util import Timer
+from ai.opt import Opt
 
 
 class _Base:
@@ -86,14 +87,14 @@ class MultiTrainer(_Base):
             for key in keys:
                 model = models[key]
                 opt = opts[key]
-
                 model.set_req_grad(True)
+
                 opt.zero_grad()
                 loss = getattr(s._env, key)(models, batch, step)
                 loss.backward()
                 opt.step()
-                model.set_req_grad(False)
 
+                model.set_req_grad(False)
                 hook.log(f'loss.{key}', loss)
             # ~
 

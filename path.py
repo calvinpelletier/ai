@@ -2,13 +2,13 @@ from os import environ
 from pathlib import Path
 
 
-def dataset(path):
+def dataset_path(path):
     return _path('AI_DATASETS_PATH', path)
 
-def model(path):
+def model_path(path):
     return _path('AI_MODELS_PATH', path)
 
-def lab(path):
+def lab_path(path):
     return _path('AI_LAB_PATH', path)
 
 

@@ -17,6 +17,7 @@ def conv(
     stride=1,
     actv=None,
     norm=None,
+    gain=None,
     clamp=None,
     noise=False,
     bias=True,
@@ -33,7 +34,8 @@ def conv(
 
     operations in order:
         resample
-            for strides < 1
+            if stride < 1 or (k == 1 and stride != 1)
+            NOTE: if resampling, stride for conv will be 1
         convolution
             either:
                 torch.nn.Conv2d
@@ -43,6 +45,7 @@ def conv(
         normalization
         noise
         activation function
+        gain
         clamp
 
     nc1 : int
@@ -52,13 +55,15 @@ def conv(
     k : int
         kernel size
     stride : int or float
-        for strides < 1 (i.e. an up convolution), the input is first resized by
+        if stride < 1 or (k == 1 and stride != 1), the input is first resized by
         a scale factor of 1/stride before using a conv of stride=1.
         TODO: allow option for transposed convs instead
     actv : str or null
         activation (see model/actv.py)
     norm : str or null
         normalization (see model/norm.py)
+    gain : float or null
+        multiply by constant value
     clamp : float or null
         clamp all output values between [-clamp, clamp]
     noise : bool
@@ -81,14 +86,15 @@ def conv(
 
     seq = []
 
-    if stride < 1:
+    if stride < 1 or (k == 1 and stride != 1):
         seq.append(resample(stride))
+        stride = 1
 
     if scale_w or lr_mult is not None:
         seq.append(Conv2d(
             nc1, nc2,
             k=k,
-            stride=max(1, stride),
+            stride=stride,
             bias=bias and not norm_has_bias,
             scale_w=scale_w,
             lr_mult=lr_mult,
@@ -97,7 +103,7 @@ def conv(
         seq.append(nn.Conv2d(
             nc1, nc2,
             kernel_size=k,
-            stride=max(1, stride),
+            stride=stride,
             padding=(k - 1) // 2,
             padding_mode=padtype,
             bias=bias and not norm_has_bias,
@@ -111,6 +117,9 @@ def conv(
 
     if actv is not None:
         seq.append(actv)
+
+    if gain is not None:
+        seq.append(Gain(gain))
 
     if clamp is not None:
         seq.append(Clamp(clamp))
@@ -198,3 +207,12 @@ class Conv2d(nn.Module):
             stride=s._stride,
             padding=s._pad,
         )
+
+
+class Gain(nn.Module):
+    def __init__(s, val):
+        super().__init__()
+        s._val = val
+
+    def forward(s, x):
+        return x * s._val

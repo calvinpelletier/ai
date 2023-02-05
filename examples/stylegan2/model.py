@@ -1,18 +1,28 @@
 import torch
+from numpy import sqrt
 
 import ai.model as m
 from ai.util import log2_diff
 
 
+# generator
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class Generator(m.Model):
-    def __init__(s, imsize, z_dim=512, nc_min=32, nc_max=512, f_n_layers=8):
+    def __init__(s,
+        imsize,
+        z_dim=512,
+        nc_min=32,
+        nc_max=512,
+        f_n_layers=8,
+        clamp=256,
+    ):
         super().__init__()
 
         # expose z_dim so external code can sample the latent space
         s.z_dim = z_dim
 
         # disentangled latent vector (w) -> img
-        s.g = SynthesisNetwork(imsize, z_dim, nc_min, nc_max)
+        s.g = SynthesisNetwork(imsize, z_dim, nc_min, nc_max, clamp)
 
         # latent vector (z) -> disentangled latent vector (w)
         s.f = MappingNetwork(z_dim, len(s.g.blocks) * 2, n_layers=f_n_layers)
@@ -22,28 +32,13 @@ class Generator(m.Model):
         return s.g(w)
 
 
-class Discriminator(m.Model):
-    def __init__(s, imsize, nc_min=32, nc_max=512):
-        initial = m.conv(3, nc_min, actv='lrelu')
-
-        main = m.pyramid(
-            imsize, 4,
-            nc_min, nc_max,
-            lambda _, a, b: m.resblk(a, b, stride=2, norm=None, actv='lrelu'),
-        )
-
-        final = m.fm2v.mbstd(4, main.nc_out, 1)
-
-        super().__init__(m.seq(initial, main, final))
-
-
 class SynthesisNetwork(m.Module):
-    def __init__(s, imsize, z_dim, nc_min=32, nc_max=512):
+    def __init__(s, imsize, z_dim, nc_min=32, nc_max=512, clamp=256):
         super().__init__()
         n = log2_diff(4, imsize)
         nc = [min(nc_min*2**i, nc_max) for i in range(n, -1, -1)]
         s.blocks = m.modules([
-            SynthesisBlock(nc[i], nc[i+1], z_dim)
+            SynthesisBlock(nc[i], nc[i+1], z_dim, clamp)
             for i in range(n)
         ])
         s.initial = torch.nn.Parameter(torch.randn([nc[0], 4, 4]))
@@ -54,6 +49,27 @@ class SynthesisNetwork(m.Module):
         for i, block in enumerate(s.blocks):
             x, img = block(x, img, ws.narrow(1, 2*i, 2))
         return img
+
+class SynthesisBlock(m.Module):
+    def __init__(s, nc1, nc2, z_dim, clamp):
+        super().__init__()
+        kw = {
+            'modtype': 'weight',
+            'actv': 'lrelu',
+            'clamp': clamp,
+            'scale_w': True,
+        }
+        s.conv0 = m.modconv(nc1, nc2, z_dim, stride=.5, noise=True, **kw)
+        s.conv1 = m.modconv(nc2, nc2, z_dim, noise=True, **kw)
+        s.to_rgb = m.modconv(nc2, 3, z_dim, **kw)
+        s.upsample = m.blur(up=2, pad=[2,1,2,1], gain=4.)
+
+    def forward(s, x, img, ws):
+        x = s.conv0(x, ws[:, 0, :])
+        x = s.conv1(x, ws[:, 1, :])
+        y = s.to_rgb(x, ws[:, 1, :])
+        img = y if img is None else y + s.upsample(img)
+        return x, img
 
 
 class MappingNetwork(m.Module):
@@ -78,19 +94,32 @@ class MappingNetwork(m.Module):
             ws = s.w_ema.lerp(ws, trunc)
 
         return ws
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class SynthesisBlock(m.Module):
-    def __init__(s, nc1, nc2, z_dim):
-        super().__init__()
-        s.conv0 = m.modconv(
-            nc1, nc2, z_dim, stride=.5, noise=True, modtype='weight')
-        s.conv1 = m.modconv(nc2, nc2, z_dim, noise=True, modtype='weight')
-        s.to_rgb = m.modconv(nc2, 3, z_dim, modtype='weight')
+# discriminator
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+class Discriminator(m.Model):
+    def __init__(s, imsize, nc_min=32, nc_max=512, clamp=256, smallest=4):
+        initial = m.conv(3, nc_min, k=1, actv='lrelu', clamp=clamp)
 
-    def forward(s, x, img, ws):
-        x = s.conv0(x, ws[:, 0, :])
-        x = s.conv1(x, ws[:, 1, :])
-        y = s.to_rgb(x, ws[:, 1, :])
-        img = y if img is None else y + m.f.resample(img, 0.5)
-        return x, img
+        main = m.pyramid(
+            imsize, smallest,
+            nc_min, nc_max,
+            lambda _, nc1, nc2: discrim_block(nc1, nc2, clamp),
+        )
+
+        final = m.fm2v.mbstd(smallest, main.nc_out, clamp=clamp)
+
+        super().__init__(m.seq(initial, main, final))
+
+def discrim_block(nc1, nc2, clamp=256):
+    gain = sqrt(0.5)
+    return m.res(
+        m.seq(
+            m.conv(nc1, nc1, actv='lrelu', clamp=clamp),
+            m.conv(nc1, nc2, stride=2, actv='lrelu', clamp=clamp, gain=gain),
+        ),
+        m.conv(nc1, nc2, k=1, stride=2, bias=False, gain=gain),
+    )
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

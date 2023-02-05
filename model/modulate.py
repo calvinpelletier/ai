@@ -3,13 +3,14 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from numpy import sqrt
 
 from ai.model.conv2d import conv, Noise
 from ai.model.linear import fc
 from ai.model.norm import AdaLIN
 from ai.model.actv import build_actv
 from ai.model.sequence import seq
-from ai.model.etc import Clamp
+from ai.model.etc import Clamp, blur
 
 
 def modconv(
@@ -50,7 +51,6 @@ def modconv(
             Quality of StyleGAN")
     k : int
         kernel size
-        TODO: support k!=3 for "weight" modtype
     stride : int or float
         for strides < 1 (i.e. an up convolution), the input is first resized
         by a scale factor of 1/stride before using a conv of stride=1
@@ -65,7 +65,6 @@ def modconv(
         TODO: support padtype!="zeros" for "weight" modtype
     scale_w : bool
         if enabled, scale conv weights by 1/sqrt(nc1 * k**2)
-        TODO: support scale_w for "weight" modtype
     lr_mult : float or None
         learning rate multiplier (scale conv weights and bias)
         TODO: support lr_mult for "weight" modtype
@@ -76,11 +75,10 @@ def modconv(
             noise, padtype, scale_w, lr_mult)
 
     elif modtype == 'weight':
-        assert k == 3, 'TODO'
         assert padtype == 'zeros', 'TODO'
-        assert not scale_w, 'TODO'
         assert lr_mult is None, 'TODO'
-        return WeightModConv(nc1, nc2, z_dim, stride, actv, clamp, noise)
+        return WeightModConv(nc1, nc2, z_dim, k, stride, actv, clamp, noise,
+            scale_w)
 
     raise NotImplementedError(f'modtype={modtype}')
 
@@ -160,10 +158,12 @@ class WeightModConv(nn.Module):
         nc1,
         nc2,
         z_dim,
+        k=3,
         stride=1,
         actv='mish',
         clamp=None,
         noise=False,
+        scale_w=True,
     ):
         '''
         nc1 : int
@@ -181,6 +181,8 @@ class WeightModConv(nn.Module):
             clamp all output values between [-clamp, clamp]
         noise : bool
             add random noise [b, 1, h, w] of learnable magnitude
+        scale_w : bool
+            if enabled, scale conv weights by 1/sqrt(nc1 * k**2)
         '''
 
         super().__init__()
@@ -189,8 +191,12 @@ class WeightModConv(nn.Module):
 
         s._fc = fc(z_dim, nc1, bias_init=1., scale_w=True)
 
-        s._weight = nn.Parameter(torch.randn([nc2, nc1, 3, 3]))
+        s._weight = nn.Parameter(torch.randn([nc2, nc1, k, k]))
+        s._weight_mult = 1. / sqrt(nc1 * k**2) if scale_w else 1.
         s._bias = nn.Parameter(torch.zeros([nc2]))
+
+        if s._stride < 1:
+            s._blur = blur(up=1, pad=[1,1,1,1], gain=4.)
 
         post = []
         if noise:
@@ -207,33 +213,46 @@ class WeightModConv(nn.Module):
     def forward(s, x, z):
         bs = x.shape[0]
 
+        # affine
         z = s._fc(z)
-        y = x * z.reshape(bs, -1, 1, 1)
 
-        if s._stride >= 1:
-            y = F.conv2d(
-                input=y,
-                weight=s._weight,
+        # normalize
+        weight = s._weight * s._weight_mult / s._weight.norm(
+            float('inf'), dim=[1,2,3], keepdim=True)
+        z = z / z.norm(float('inf'), dim=1, keepdim=True)
+
+        # calc weights and demod coefficients
+        w = weight.unsqueeze(0)
+        w = w * z.reshape(bs, 1, -1, 1, 1)
+        dcoefs = (w.square().sum(dim=[2,3,4]) + 1e-8).rsqrt()
+
+        # pre conv scale
+        x = x * z.reshape(bs, -1, 1, 1)
+
+        # conv
+        if s._stride < 1:
+            x = F.conv_transpose2d(
+                input=x,
+                weight=weight.transpose(0, 1),
+                bias=None,
+                stride=2,
+                padding=0,
+            )
+            x = s._blur(x)
+        else:
+            x = F.conv2d(
+                input=x,
+                weight=weight,
                 bias=None,
                 stride=s._stride,
                 padding=1,
-                dilation=1,
-                groups=1,
-            )
-        else:
-            y = F.conv_transpose2d(
-                input=y,
-                weight=s._weight.transpose(0, 1),
-                bias=None,
-                stride=2,
-                padding=1,
-                output_padding=1,
-                groups=1,
-                dilation=1,
             )
 
-        w = s._weight.unsqueeze(0) * z.reshape(bs, 1, -1, 1, 1)
-        dcoefs = ((w * w).sum(dim=[2,3,4]) + 1e-8).rsqrt()
-        y *= dcoefs.reshape(bs, -1, 1, 1)
+        # post conv scale
+        x = x * dcoefs.reshape(bs, -1, 1, 1)
 
-        return y + s._bias.reshape([1, -1, 1, 1])
+        # bias
+        x = x + s._bias.reshape(1, -1, 1, 1)
+
+        # noise, actv, clamp
+        return s._post(x)

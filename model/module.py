@@ -76,12 +76,12 @@ class Model(torch.nn.Module):
         for param in s.parameters():
             param.requires_grad = req_grad
 
+    def get_device(s):
+        return next(s.parameters()).device
 
-# alias
+
+# aliases
 class Module(torch.nn.Module):
     pass
-
-
-# alias
 def modules(x):
     return torch.nn.ModuleList(x)

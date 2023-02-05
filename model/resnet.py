@@ -36,7 +36,7 @@ def resblk(nc1, nc2, stride=1, actv='mish', norm='batch', se=True):
         conv(nc2, nc2, norm=norm),
     ]
     if se:
-        main.append(SqueezeExcite(nc2))
+        main.append(SqueezeExcite(nc2, actv=actv))
     main = seq(*main)
 
     if nc1 != nc2 or stride != 1:

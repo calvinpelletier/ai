@@ -43,24 +43,28 @@ def create_data_loader(
         raise ValueError(f'unexpected device: {device}')
 
     loader = torch.utils.data.DataLoader(data, **loader_kwargs)
-    it = data_iter(loader, device, postprocess)
-    if infinite:
-        return inf_loop(it)
-    return it
+    return data_iter(loader, device, infinite, postprocess)
 
 
-def data_iter(loader, device, postprocess=None):
-    for batch in loader:
-        batch = transfer_data(batch, device)
-        if postprocess is not None:
-            batch = postprocess(batch)
-        yield batch
-
-
-def inf_loop(it):
+def data_iter(loader, device, infinite=False, postprocess=None):
     while 1:
-        for x in it:
-            yield x
+        for batch in loader:
+            batch = transfer_data(batch, device)
+            batch = process(batch, postprocess)
+            yield batch
+
+        if not infinite:
+            break
+
+
+def process(data, fn):
+    if isinstance(fn, dict):
+        assert isinstance(data, dict)
+        for k in fn.keys():
+            data[k] = fn[k](data[k])
+    elif fn is not None:
+        data = fn(data)
+    return data
 
 
 def transfer_data(data, device):

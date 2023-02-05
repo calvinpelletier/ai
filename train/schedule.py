@@ -10,12 +10,16 @@ class Logarithmic:
 
 class Schedule:
     def __init__(s, cfg):
-        assert isinstance(cfg, Logarithmic), 'TODO: non-logarithmic schedule'
-        s.freq = cfg.start
-        s.end = cfg.end
-        s.mult = cfg.mult
+        if isinstance(cfg, int):
+            s.freq = cfg
+            s.mult = None
+        else:
+            assert isinstance(cfg, Logarithmic), 'unknown schedule type'
+            s.freq = cfg.start
+            s.end = cfg.end
+            s.mult = cfg.mult
 
     def __call__(s, step):
-        if s.freq < s.end and step == s.mult * s.freq:
+        if s.mult is not None and s.freq < s.end and step == s.mult * s.freq:
             s.freq *= s.mult
         return step % s.freq == 0

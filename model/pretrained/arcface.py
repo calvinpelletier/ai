@@ -2,7 +2,7 @@ from collections import namedtuple
 import torch
 from torch import nn
 
-from ai.path import model as model_path
+from ai.path import model_path
 
 
 class ArcFace(nn.Module):

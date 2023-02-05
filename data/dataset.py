@@ -1,36 +1,41 @@
 import torch
-import math
+import numpy as np
 
 from ai.data.util import create_data_loader
 
 
 class Dataset:
-    def __init__(s, data, preprocessor=None, postprocessor=None):
+    def __init__(s, data, preprocess=None, postprocess=None):
         '''
-        data : array-like
+        data : array-like or dict of array-like
             a representation of the underlying dataset that can be held in
             memory all at once (e.g. a list of paths to image files)
-        preprocessor : callable or null
+        preprocess : callable or null
             a function used by data workers (e.g. read image from disk)
             args
                 an item from <data>
             returns
                 tensor or ndarray (or list/dict of them)
-        postprocessor : callable or null
+        postprocess : callable or null
             a function called after the data has been transfered to the device
             (e.g. normalize an image tensor)
             args
-                tensor or list/dict of tensors
+                tensor or dict of tensors
             returns
-                tensor or list/dict of tensors
+                tensor or dict of tensors
         '''
 
+        if isinstance(data, np.lib.npyio.NpzFile):
+            data = {k: data[k] for k in data.keys()}
         s._data = data
-        s._preprocessor = preprocessor
-        s._postprocessor = postprocessor
+
+        s._preprocess = preprocess
+        s._postprocess = postprocess
+
+        s._n = _get_length(s._data)
 
     def __len__(s):
-        return len(s._data)
+        return s._n
 
     def length(s, batch_size):
         '''the length accounting for dropping the last incomplete batch
@@ -41,7 +46,7 @@ class Dataset:
             int
         '''
 
-        return (len(s._data) // batch_size) * batch_size
+        return (s._n // batch_size) * batch_size
 
     def split(s, *ratio):
         '''split the dataset into subdatasets
@@ -54,16 +59,16 @@ class Dataset:
         '''
 
         assert len(ratio) > 1
-        if not math.isclose(sum(ratio), 1.):
+        if not np.isclose(sum(ratio), 1.):
             raise ValueError(f'ratio ({str(ratio)}) != 1.')
 
         ret = []
-        n, x, y = len(s._data), 0, 0
+        x, y = 0, 0
         for r in ratio[:-1]:
             x = y
-            y += int(r * n)
-            ret.append(s._create_subdataset(s._data[x:y]))
-        ret.append(s._create_subdataset(s._data[y:]))
+            y += int(r * s._n)
+            ret.append(s._create_subdataset(x, y))
+        ret.append(s._create_subdataset(y, None))
         return ret
 
     def sample(s, n, device='cuda'):
@@ -101,32 +106,68 @@ class Dataset:
         '''
 
         return create_data_loader(
-            _Dataset(s._data, s._preprocessor),
+            _Dataset(s._data, s._preprocess),
             batch_size=batch_size,
             device=device,
             shuffle=train,
             infinite=train,
             drop_last=drop_last,
             n_workers=n_workers,
-            postprocess=s._postprocessor,
+            postprocess=s._postprocess,
         )
 
-    def _create_subdataset(s, subdata):
-        return Dataset(subdata, s._preprocessor, s._postprocessor)
+    def _create_subdataset(s, x, y):
+        if isinstance(s._data, dict):
+            subdata = {k: _slice(v, x, y) for k, v in s._data.items()}
+        else:
+            subdata = _slice(s._data, x, y)
+
+        return Dataset(subdata, s._preprocess, s._postprocess)
+
+def _slice(data, x, y):
+    return data[x:y] if y is not None else data[x:]
 
 
 class _Dataset(torch.utils.data.Dataset):
-    def __init__(s, data, preprocessor=None):
+    def __init__(s, data, preprocess=None):
         super().__init__()
-        assert len(data) > 0
         s._data = data
-        s._preprocessor = preprocessor
+        s._preprocess = preprocess
+
+        s._n = _get_length(data)
+        assert s._n > 0
+
+        s._fn = _process_dict if isinstance(data, dict) else _process
 
     def __len__(s):
-        return len(s._data)
+        return s._n
 
     def __getitem__(s, i):
-        x = s._data[i]
-        if s._preprocessor is not None:
-            x = s._preprocessor(x)
-        return x
+        return s._fn(s._data, s._preprocess, i)
+
+def _process(data, fn, i):
+    return data[i] if fn is None else fn(data[i])
+
+def _process_dict(data, fn, i):
+    if fn is None:
+        return {k: v[i] for k, v in data.items()}
+
+    if isinstance(fn, dict):
+        return {
+            k: fn[k](v[i]) if k in fn else v[i]
+            for k, v in data.items()
+        }
+
+    return {k: fn(v[i]) for k, v in data.items()}
+
+
+def _get_length(data):
+    if isinstance(data, dict):
+        keys = list(data.keys())
+        n = len(data[keys[0]])
+        if len(keys) > 1:
+            for k in keys[1:]:
+                assert len(data[k]) == n
+    else:
+        n = len(data)
+    return n

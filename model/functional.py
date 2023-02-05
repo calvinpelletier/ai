@@ -25,3 +25,10 @@ def flatten(x, keep_batch_dim=True):
 
 def normalize_2nd_moment(x, dim=1, eps=1e-8):
     return x * (x.square().mean(dim=dim, keepdim=True) + eps).rsqrt()
+
+
+# aliases
+def one_hot(*a, **kw):
+    return F.one_hot(*a, **kw)
+def cat(*a, **kw):
+    return torch.cat(*a, **kw)

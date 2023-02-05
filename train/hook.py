@@ -32,9 +32,10 @@ class Hook:
             if s._print:
                 print('~'*32 + f'step: {step} ({sps:.2f}/sec)' + '~'*32)
 
-        for hook, sch in s._hooks:
-            if sch(step):
-                hook(step, model, opt)
+        with torch.no_grad():
+            for hook, sch in s._hooks:
+                if sch(step):
+                    hook(step, model, opt)
 
     def log(s, k, v):
         if not s._log or not s._is_log_step:

@@ -1,5 +1,7 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
+import numpy as np
 
 
 def resample(stride):
@@ -79,3 +81,35 @@ class Flatten(nn.Module):
 
 def flatten(*a, **kw):
     return Flatten(*a, **kw)
+
+
+class Blur(nn.Module):
+    def __init__(s, up, pad, gain):
+        super().__init__()
+        s._up = up
+        s._pad = pad
+        s._gain = gain
+
+        f = torch.as_tensor([1, 3, 3, 1], dtype=torch.float32)
+        f = f.ger(f)
+        assert f.ndim == 2
+        f /= f.sum()
+        s.register_buffer('_filter', f)
+
+    def forward(s, x):
+        bs, nc, h, w = x.shape
+
+        x = x.reshape([bs, nc, h, 1, w, 1])
+        x = F.pad(x, [0, s._up - 1, 0, 0, 0, s._up - 1])
+        x = x.reshape([bs, nc, h * s._up, w * s._up])
+        x = F.pad(x, s._pad)
+
+        f = s._filter * (s._gain ** (s._filter.ndim / 2))
+        f = f.to(x.dtype)
+        f = f.flip(list(range(f.ndim)))
+        f = f[np.newaxis, np.newaxis].repeat([nc, 1] + [1] * f.ndim)
+
+        return F.conv2d(input=x, weight=f, groups=nc)
+
+def blur(*a, **kw):
+    return Blur(*a, **kw)

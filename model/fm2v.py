@@ -6,6 +6,7 @@ from ai.model.linear import fc
 from ai.model.conv2d import conv
 from ai.model.sequence import seq
 from ai.model.etc import flatten, global_avg
+from ai.model.norm import MinibatchStd
 
 
 def simple(nc_in, n_out, actv=None):
@@ -35,11 +36,13 @@ def simple(nc_in, n_out, actv=None):
 def mbstd(
     res,
     nc,
-    n_out,
+    n_out=1,
     mbstd_group_size=4,
     mbstd_nc=1,
     actv='lrelu',
     final_actv=None,
+    clamp=256,
+    scale_w=True,
 ):
     '''feature map to vector commonly used by discriminators
 
@@ -64,31 +67,8 @@ def mbstd(
 
     return seq(
         MinibatchStd(group_size=mbstd_group_size, nc=mbstd_nc),
-        conv(nc + mbstd_nc, nc, actv=actv),
+        conv(nc + mbstd_nc, nc, actv=actv, clamp=clamp, scale_w=scale_w),
         flatten(),
-        fc(nc * res**2, nc, actv=actv),
-        fc(nc, n_out, actv=final_actv),
+        fc(nc * res**2, nc, actv=actv, scale_w=scale_w),
+        fc(nc, n_out, actv=final_actv, scale_w=scale_w),
     )
-
-class MinibatchStd(torch.nn.Module):
-    def __init__(s, group_size=4, nc=1):
-        super().__init__()
-        s._group_size = group_size
-        s._nc = nc
-
-    def forward(s, x):
-        N, C, H, W = x.shape
-        G = torch.min(
-            torch.as_tensor(s._group_size),
-            torch.as_tensor(N),
-        )
-        F = s._nc
-        c = C // F
-        y = x.reshape(G, -1, F, c, H, W)
-        y = y - y.mean(dim=0)
-        y = y.square().mean(dim=0)
-        y = (y + 1e-8).sqrt()
-        y = y.mean(dim=[2,3,4])
-        y = y.reshape(-1, F, 1, 1)
-        y = y.repeat(G, 1, H, W)
-        return torch.cat([x, y], dim=1)

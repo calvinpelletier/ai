@@ -1,6 +1,6 @@
 from torchvision import datasets, transforms
 
-from ai.path import dataset as dataset_path
+from ai.path import dataset_path
 from ai.util import img as img_util
 from ai.data.dataset import Dataset
 

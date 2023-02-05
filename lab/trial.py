@@ -2,7 +2,7 @@ import torch
 from shutil import rmtree
 
 from ai.train.log import Tensorboard
-from ai.path import lab as lab_path
+from ai.path import lab_path
 from ai.train.hook import Hook
 
 
