@@ -25,7 +25,10 @@ def test_tensorboard_hook():
 def _test_tensorboard_hook(path, train_fn):
     if path.exists():
         rmtree(path)
-    hook = Hook(Tensorboard(path))
+    hook = Hook(log={
+        'fn': Tensorboard(path),
+        'interval': 10,
+    })
     train_fn(hook)
     assert path.exists()
 

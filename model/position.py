@@ -6,7 +6,7 @@ from torch.nn import functional as F
 
 
 class SinusoidalPosEmb(nn.Module):
-    def __init__(s, size):
+    def __init__(s, size: int):
         super().__init__()
         assert size % 2 == 0
         s._size = size
@@ -28,8 +28,8 @@ POSITION_EMBEDDINGS = {
     'sin': SinusoidalPosEmb,
 }
 
-def pos_emb(size, type_='sin', **kw):
-    '''position embedding
+def pos_emb(size: int, type_: str = 'sin', **kw):
+    '''Position embedding.
 
     size : int
         number of positions

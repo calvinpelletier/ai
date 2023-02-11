@@ -1,8 +1,7 @@
 import torch
 
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.examples.stylegan2.model import Generator, Discriminator
-from ai.util import assert_shape
 
 
 def test_stylegan2_model():

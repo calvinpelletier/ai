@@ -18,8 +18,8 @@ class Opt:
     def zero_grad(s):
         s._opt.zero_grad()
 
-    def save(s, path):
-        torch.save(s.state_dict(), path)
+    def state_dict(s):
+        return s._opt.state_dict()
 
 
 def sgd(model, **kw):

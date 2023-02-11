@@ -13,6 +13,7 @@ from ai import (
     util,
 )
 
-from ai.alias import fire, no_grad
+from ai.alias import run, no_grad
 from ai.config import Config
+from ai.lab import Study, Trial
 from ai.train import Trainer

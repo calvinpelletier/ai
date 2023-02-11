@@ -1,20 +1,16 @@
 '''models and modules'''
 
 import torch
+from typing import Union
 
 from ai.model.param import param_init
+from ai.path import PathLike
 
 
 class Model(torch.nn.Module):
-    '''class that wraps the top-level module of a model
+    '''Class that wraps the top-level module of a model.
 
-    example 1 (randomly initialized parameters):
-        model = Model(module).init().to(device).train()
-
-    example 2 (load parameters from disk):
-        model = Model(module).init(path_to_weights).to(device).eval()
-
-    methods
+    METHODS
         __init__(net: module or null)
             if net is null, user must implement Model.forward
 
@@ -30,7 +26,7 @@ class Model(torch.nn.Module):
             set "requires_grad" flag of every parameter in model
     '''
 
-    def __init__(s, net=None):
+    def __init__(s, net: Union[torch.nn.Module, None] = None):
         '''
         net : module or null
             the top-level module of the model (if net is null, user must
@@ -45,7 +41,7 @@ class Model(torch.nn.Module):
             raise NotImplementedError()
         return s._net(*a, **kw)
 
-    def init(s, path=None):
+    def init(s, path: Union[PathLike, None] = None):
         '''initialize parameters
 
         path : pathlike or null
@@ -59,7 +55,7 @@ class Model(torch.nn.Module):
             s.load_state_dict(torch.load(path))
         return s
 
-    def save(s, path):
+    def save(s, path: PathLike):
         '''save parameters to disk
 
         path : pathlike
@@ -67,7 +63,7 @@ class Model(torch.nn.Module):
 
         torch.save(s.state_dict(), path)
 
-    def set_req_grad(s, req_grad):
+    def set_req_grad(s, req_grad: bool):
         '''set "requires_grad" flag of every parameter in model
 
         req_grad : bool
@@ -76,7 +72,7 @@ class Model(torch.nn.Module):
         for param in s.parameters():
             param.requires_grad = req_grad
 
-    def get_device(s):
+    def get_device(s) -> torch.device:
         return next(s.parameters()).device
 
 

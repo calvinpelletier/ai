@@ -5,6 +5,7 @@ from torch import nn
 
 from ai.model.linear import fc
 from ai.model.sequence import seq
+from ai.model.typing import Norm
 
 
 CONV2D_NORMS = {
@@ -12,40 +13,44 @@ CONV2D_NORMS = {
     'instance': (nn.InstanceNorm2d, False),
 }
 
-def build_conv2d_norm(norm, nc):
-    '''string-to-module for conv2d normalizations
+def build_conv2d_norm(norm: Norm, nc: int):
+    '''String-to-module for conv2d normalizations.
 
-    input
+    INPUT
         tensor[b, <nc>, h, w]
-    output
+    OUTPUT
         tensor[b, <nc>, h, w]
 
-    args
+    ARGS
         norm : string
             see CONV2D_NORMS for possible values
         nc : int
             number of input channels
     '''
+
     if norm is None:
         return None, False
+    elif isinstance(norm, nn.Module):
+        return norm, False
+
     cls, norm_has_bias = CONV2D_NORMS[norm]
     return cls(nc), norm_has_bias
 
 
 class AdaLIN(nn.Module):
-    '''adaptive layer-instance normalization
+    '''Adaptive layer-instance normalization.
 
     see paper "U-GAT-IT: Unsupervised Generative Attentional Networks with
     Adaptive Layer-Instance Normalization for Image-to-Image Translation"
 
-    input
+    INPUT
         x : tensor[b, <nc>, h, w]
         z : tensor[b, <z_dim>]
-    output
+    OUTPUT
         tensor[b, <nc>, h, w]
     '''
 
-    def __init__(s, nc, z_dim, eps=1e-5):
+    def __init__(s, nc: int, z_dim: int, eps: float = 1e-5):
         '''
         nc : int
             number of input channels

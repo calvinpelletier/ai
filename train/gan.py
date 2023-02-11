@@ -1,11 +1,11 @@
 import torch
 import torch.nn.functional as F
 
-from ai.train.env import Env
+from ai.train.env import MultiEnv
 from ai.train.util import on_interval
 
 
-class Gan(Env):
+class Gan(MultiEnv):
     def __init__(s,
         aug=None,
         g_reg_interval=None,
@@ -13,7 +13,6 @@ class Gan(Env):
         d_reg_interval=16,
         d_reg_weight=1.,
     ):
-        super().__init__()
         s._aug = aug
         s._g_reg_interval, s._g_reg_weight = g_reg_interval, g_reg_weight
         s._d_reg_interval, s._d_reg_weight = d_reg_interval, d_reg_weight

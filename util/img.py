@@ -34,6 +34,8 @@ def _to_pil(tensor):
 
 def resize(tensor, size, mode='bilinear', align_corners=True):
     assert tensor.shape[-1] == tensor.shape[-2], 'TODO: resize non-square img'
+    if tensor.shape[-1] == size:
+        return tensor
     return torch.nn.functional.interpolate(
         tensor,
         size=(size, size),
@@ -43,7 +45,7 @@ def resize(tensor, size, mode='bilinear', align_corners=True):
 
 
 def resize_dir(src, dest, imsize):
-    dest.mkdir()
+    dest.mkdir(parents=True, exist_ok=True)
     for path in tqdm(list(src.iterdir())):
         im = Image.open(path)
         assert im.size[0] == im.size[1], 'TODO: handle non-square images'
@@ -51,18 +53,23 @@ def resize_dir(src, dest, imsize):
         im.save(dest / path.name, 'PNG')
 
 
-def create_img_grid(imgs):
-    ny, nx, c, h, w = imgs.shape
+def create_img_grid(tensors):
+    nx = len(tensors)
+    ny = len(tensors[0])
+    c, h, w = tensors[0][0].shape
+
     assert c == 3
     canvas = Image.new(
         'RGB',
         (w * nx, h * ny),
         'black',
     )
-    for y, row in enumerate(imgs):
-        for x, img in enumerate(row):
-            canvas.paste(to_pil(img), (w * x, h * y))
+
+    for x, col in enumerate(tensors):
+        for y, tensor in enumerate(col):
+            canvas.paste(to_pil(tensor), (w * x, h * y))
+
     return canvas
 
-def save_img_grid(path, imgs):
-    create_img_grid(imgs).save(path)
+def save_img_grid(path, tensors):
+    create_img_grid(tensors).save(path)

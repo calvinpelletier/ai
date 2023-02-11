@@ -4,15 +4,15 @@ import torch.nn.functional as F
 import torchvision
 from lpips import LPIPS
 
+from ai.loss.loss import Loss
 from ai.util.img import resize
 
 
-class PerceptualLoss(nn.Module):
-    def __init__(s, type_='trad-vgg', device='cuda', detach_y=True):
+class PerceptualLoss(Loss):
+    def __init__(s, type_='trad-vgg', detach_y=True):
         '''
         type_ : str
             "lpips-alex", "lpips-vgg", or "trad-vgg"
-        device : str
         detach_y : bool
             detach second argument in forward pass before calculating loss
         '''
@@ -28,11 +28,12 @@ class PerceptualLoss(nn.Module):
         else:
             raise ValueError(type_)
 
-        s.to(device)
-
     def forward(s, x, y):
+        s.to_device(x.device)
+
         if s._detach_y:
             y = y.detach()
+
         return s._loss_fn(x, y).mean()
 
 

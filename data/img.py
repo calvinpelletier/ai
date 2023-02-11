@@ -34,11 +34,13 @@ class ImgDataset(Dataset):
         dir = path / str(imsize)
         if not dir.exists():
             src_imsize = _choose_src_imsize(path, imsize)
+            print(f'\nresizing images from {src_imsize} to {imsize}...')
             img_util.resize_dir(
                 path / str(src_imsize) / 'data',
                 dir / 'data',
                 imsize,
             )
+            print('done\n')
 
         # create dataset
         super().__init__(
@@ -50,7 +52,7 @@ class ImgDataset(Dataset):
         s.metadata_path = dir / 'metadata' # e.g. FID stats
 
 
-def _choose_src_imsize(path, target_imsize):
+def _choose_src_imsize(path, target_imsize, allow_upsampling=False):
     imsizes = sorted([int(x.stem) for x in path.iterdir()])
     assert imsizes
     i = 0
@@ -58,4 +60,9 @@ def _choose_src_imsize(path, target_imsize):
         i += 1
     if i < len(imsizes):
         return imsizes[i]
-    return imsizes[-1]
+    if allow_upsampling:
+        return imsizes[-1]
+    raise Exception('no valid source imsizes ({}) for target imsize: {}'.format(
+        ','.join([str(x) for x in imsizes]),
+        target_imsize,
+    ))

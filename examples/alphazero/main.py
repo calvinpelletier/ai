@@ -22,8 +22,12 @@ def run(game, output_path, cfg_override):
     model = a0.AlphaZeroMLP(game).init().to(cfg.train.device)
     player = a0.AlphaZeroPlayer(cfg.player, game, model)
 
+    task = ai.task.GameTask(game, trial.log)
+    hook = trial.hook(snapshot=False)
+    hook.add(lambda step, _model, _opt: task(player, step))
+
     trainer = a0.build_trainer(cfg, game, player)
-    trainer.train(model, ai.opt.build(cfg.opt, model), trial.hook())
+    trainer.train(model, ai.opt.build(cfg.opt, model), hook)
 
 
 if __name__ == '__main__':

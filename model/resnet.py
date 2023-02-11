@@ -1,21 +1,30 @@
 '''components of ResNets'''
 
 from torch import nn
+from torch.nn import Module
 
 from ai.model.sequence import seq
 from ai.model.conv2d import conv
 from ai.model.etc import resample, res, global_avg
+from ai.model.typing import Stride, Actv, Norm
 
 
-def resblk(nc1, nc2, stride=1, actv='mish', norm='batch', se=True):
-    '''resnet block
+def resblk(
+    nc1: int,
+    nc2: int,
+    stride: Stride = 1,
+    actv: Actv = 'mish',
+    norm: Norm = 'batch',
+    se: bool = True,
+) -> Module:
+    '''ResNet block.
 
-    input
+    INPUT
         tensor[b, <nc1>, h, w]
-    output
+    OUTPUT
         tensor[b, <nc2>, h*, w*] where h* = h / <stride>
 
-    args
+    ARGS
         nc1 : int
             number of input channels
         nc2 : int
@@ -23,14 +32,15 @@ def resblk(nc1, nc2, stride=1, actv='mish', norm='batch', se=True):
         stride : int or float
             for strides < 1 (i.e. an up convolution), the input is first resized
             by a scale factor of 1/stride before using a conv of stride=1
-        actv : str or null
+        actv : str or Module or null
             activation (see model/actv.py)
-        norm : str or null
+        norm : str or Module or null
             normalization (see model/norm.py)
         se : bool
             add squeeze-excitation op (self-modulate using global information)
     '''
 
+    # main path
     main = [
         conv(nc1, nc2, stride=stride, norm=norm, actv=actv),
         conv(nc2, nc2, norm=norm),
@@ -39,32 +49,40 @@ def resblk(nc1, nc2, stride=1, actv='mish', norm='batch', se=True):
         main.append(SqueezeExcite(nc2, actv=actv))
     main = seq(*main)
 
+    # shortcut
     if nc1 != nc2 or stride != 1:
         shortcut = seq(resample(stride), conv(nc1, nc2, k=1))
     else:
-        shortcut = None
+        shortcut = None # simple addition residual
 
     return res(main, shortcut)
 
 
-def resblk_group(n, nc1, nc2, stride=1, **kw):
-    '''sequence of resnet blocks (but only striding once)
+def resblk_group(
+    n: int,
+    nc1: int,
+    nc2: int,
+    stride: Stride = 1,
+    **kw,
+) -> Module:
+    '''Sequence of resnet blocks (but only striding once).
 
-    input
+    INPUT
         tensor[b, <nc1>, h, w]
-    output
+    OUTPUT
         tensor[b, <nc2>, h*, w*] where h* = h / <stride>
 
-    n : int
-        number of blocks
-    nc1 : int
-        number of input channels
-    nc2 : int
-        number of output channels
-    stride : int or float
-        stride of the first block (all others use stride=1)
-    **kw
-        any additional resblk kwargs
+    ARGS
+        n : int
+            number of blocks
+        nc1 : int
+            number of input channels
+        nc2 : int
+            number of output channels
+        stride : int or float
+            stride of the first block (all others use stride=1)
+        **kw
+            any additional resblk kwargs
     '''
 
     assert n > 0
@@ -75,35 +93,33 @@ def resblk_group(n, nc1, nc2, stride=1, **kw):
 
 
 class SqueezeExcite(nn.Module):
-    '''self-modulate using global information
+    '''Squeeze-Excitation operation (self-modulate using global information).
 
-    input
+    INPUT
         tensor[b, <nc>, h, w]
-    output
+    OUTPUT
         tensor[b, <nc>, h, w]
-    '''
 
-    def __init__(s, nc, reduction=16, actv='mish'):
-        '''
+    ARGS
         nc : int
             number of channels
         reduction : int
             intermediate number of channels during squeeze = nc / reduction
         actv : str
             intermediate activation function
-        '''
+    '''
 
+    def __init__(s, nc: int, reduction: int = 16, actv: Actv = 'mish'):
         super().__init__()
-        reduction = min(reduction, nc)
-
+        reduced = max(1, nc // reduction)
         s._net = seq(
             global_avg(),
-            conv(nc, nc // reduction, k=1, actv=actv),
-            conv(nc // reduction, nc, k=1, actv='sigmoid'),
+            conv(nc, reduced, k=1, actv=actv),
+            conv(reduced, nc, k=1, actv='sigmoid'),
         )
 
     def forward(s, x):
         return x * s._net(x)
 
-def se(*a, **kw):
+def se(*a, **kw) -> Module:
     return SqueezeExcite(*a, **kw)

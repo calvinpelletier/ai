@@ -13,3 +13,7 @@ def print_info(tensor, name=''):
         f'dtype={dtype}',
         f'device={tensor.device}',
     ]))
+
+
+def print_header(text):
+    print('~'*32 + text + '~'*(48-len(text)))

@@ -25,6 +25,8 @@ def _download(path):
     train = _load_torchvision_mnist(tmp_path, True)
     test = _load_torchvision_mnist(tmp_path, False)
 
+    print('\nconverting mnist data...')
+
     n = len(train) + len(test)
     ds = {
         'x': np.empty([n, 1, 28, 28], dtype=np.uint8),
@@ -38,8 +40,9 @@ def _download(path):
         i = _store(ds, i, data)
     assert i == n
 
-
     np.savez(path, **ds)
+
+    print('done\n')
 
 
 def _store(ds, i, data):

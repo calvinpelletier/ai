@@ -1,13 +1,13 @@
 import numpy as np
 
 from ai.util.fid import calc_fid, calc_fid_stats_for_dataset
-from ai.util import null_op
+from ai.util import no_op
 
 
 class ImgGenTask:
     def __init__(s,
         ds,
-        log=null_op,
+        log=no_op,
         device='cuda',
         bs=64,
         n_workers=8,

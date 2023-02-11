@@ -14,12 +14,12 @@ class ReplayBuffer:
         buf_size,
         n_replay_times,
     ):
-        s.generator = create_data_loader(
+        s.generator = iter(create_data_loader(
             data_gen,
             batch_size=None,
             device=device,
             n_workers=n_data_workers,
-        )
+        ))
 
         s.n_replay_times = n_replay_times
         s.batch_size = batch_size

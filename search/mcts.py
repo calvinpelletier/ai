@@ -43,7 +43,7 @@ class MctsAgent:
         s._model = model
         s._setup_mcts()
 
-    def act(s, game):
+    def act(s, game, return_pi=False):
         with torch.no_grad():
             actions, counts = s._mcts.run(game)
 
@@ -53,11 +53,12 @@ class MctsAgent:
         )
         action = actions[i]
 
-        pi = np.zeros(game.n_actions)
-        for action, count in zip(actions, counts):
-            pi[action] = count
-
-        return action, pi
+        if return_pi:
+            pi = np.zeros(game.n_actions)
+            for action, count in zip(actions, counts):
+                pi[action] = count
+            return action, pi
+        return action
 
     def _temperature(s, ply):
         raise NotImplementedError()

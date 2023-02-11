@@ -82,7 +82,7 @@ class Dataset:
             tensor[n, ...] or list/dict of tensor[n, ...]
         '''
 
-        return next(s.loader(n, device))
+        return next(iter(s.loader(n, device)))
 
     def loader(s,
         batch_size,

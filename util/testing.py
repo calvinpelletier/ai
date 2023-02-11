@@ -3,6 +3,9 @@ import torch.nn.functional as F
 import numpy as np
 
 
+DEVICE = 'cuda'
+
+
 def assert_equal(a, b):
     a = a.detach().cpu().numpy()
     b = b.detach().cpu().numpy()

@@ -1,6 +1,5 @@
+from ai.util.testing import *
 import ai.model as m
-from ai.testing import DEVICE
-from ai.util import assert_autoencode
 
 
 def test_conv2d():

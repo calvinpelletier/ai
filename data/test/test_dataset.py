@@ -25,6 +25,6 @@ def _test_dataset(ds, size, shape, bounds):
     assert_bounds(samples, bounds)
 
     loader = train_ds.loader(8, DEVICE)
-    batch = next(loader)
+    batch = next(iter(loader))
     assert_shape(batch, [8] + shape)
     assert_bounds(batch, bounds)

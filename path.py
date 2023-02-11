@@ -1,5 +1,9 @@
 from os import environ
 from pathlib import Path
+from typing import Union
+
+
+PathLike = Union[str, Path]
 
 
 def dataset_path(path):
@@ -13,9 +17,13 @@ def lab_path(path):
 
 
 def _path(env, path):
+    if isinstance(path, Path):
+        return path
+    assert isinstance(path, str)
     if path.startswith('/'):
         return Path(path)
     return _get_env_path(env) / path
+
 
 def _get_env_path(name):
     path = environ.get(name)

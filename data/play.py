@@ -16,7 +16,7 @@ def play_self(game, player):
     replay = {'ob': [], 'pi': [], 'outcome': None}
     while game.outcome is None:
         replay['ob'].append(game.observe())
-        action, pi = player.act(game)
+        action, pi = player.act(game, return_pi=True)
         replay['pi'].append(pi)
         game.step(action)
     replay['ob'] = np.asarray(replay['ob'])
