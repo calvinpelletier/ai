@@ -2,13 +2,21 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import numpy as np
+from typing import Optional
+from einops.layers.torch import Rearrange
 
 
-def resample(stride):
-    '''resize a feature map by scale factor of 1/stride
+def resample(stride: int | float):
+    '''Resize a feature map by scale factor of 1/stride.
 
-    stride : int or float
-        inverse of the scale factor
+    INPUT
+        tensor[b, c, h, w]
+    OUTPUT
+        tensor[b, c, h / <stride>, w / <stride>]
+
+    ARGS
+        stride : int or float
+            inverse of the scale factor
     '''
 
     if stride > 1:
@@ -19,21 +27,27 @@ def resample(stride):
 
 
 def global_avg():
-    '''feature map [b, c, h, w] -> global spatial average [b, c, 1, 1]'''
+    '''Global spatial average.
+
+    INPUT
+        tensor[b, c, h, w]
+    OUTPUT
+        tensor[b, c, 1, 1]
+    '''
 
     return nn.AdaptiveAvgPool2d(1)
 
 
 class Residual(nn.Module):
-    '''main operation plus a shortcut around it'''
+    '''Main operation plus a shortcut around it.
 
-    def __init__(s, main, shortcut=None):
-        '''
+    ARGS
         main : module
         shortcut : module or null
             if null, the residual is simply the input
-        '''
+    '''
 
+    def __init__(s, main: nn.Module, shortcut: Optional[nn.Module] = None):
         super().__init__()
         s._main = main
         s._shortcut = shortcut
@@ -47,16 +61,20 @@ def res(*a, **kw):
 
 
 class Clamp(nn.Module):
-    def __init__(s, val):
-        '''
+    '''Restrict input tensor values within a range.
+
+    ARGS
         val : float or null
             clamp all output values between [-val, val]
-        '''
+    '''
 
+    def __init__(s, val: Optional[float]):
         super().__init__()
         s._val = val
 
     def forward(s, x):
+        if s._val is None:
+            return x
         return x.clamp(-s._val, s._val)
 
 def clamp(*a, **kw):
@@ -64,13 +82,15 @@ def clamp(*a, **kw):
 
 
 class Flatten(nn.Module):
-    def __init__(s, keep_batch_dim=True):
-        '''
+    '''Flatten the input tensor.
+
+    ARGS
         keep_batch_dim : bool
             if true (default), [bs, ...] to [bs, n]
             else, [...] to [n]
-        '''
+    '''
 
+    def __init__(s, keep_batch_dim: bool = True):
         super().__init__()
         s._keep_batch_dim = keep_batch_dim
 
@@ -84,7 +104,7 @@ def flatten(*a, **kw):
 
 
 class Blur(nn.Module):
-    def __init__(s, up, pad, gain):
+    def __init__(s, up: int, pad: list[int], gain: float):
         super().__init__()
         s._up = up
         s._pad = pad
@@ -113,3 +133,7 @@ class Blur(nn.Module):
 
 def blur(*a, **kw):
     return Blur(*a, **kw)
+
+
+# aliases
+rearrange = Rearrange

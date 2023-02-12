@@ -1,0 +1,15 @@
+einops
+fire
+gymnasium
+lpips
+matplotlib
+numpy
+optuna
+Pillow
+pyspng
+redis
+scikit-learn
+tensorboard
+torch
+torchvision
+tqdm

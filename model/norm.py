@@ -2,10 +2,10 @@
 
 import torch
 from torch import nn
+from typing import Optional
 
 from ai.model.linear import fc
 from ai.model.sequence import seq
-from ai.model.typing import Norm
 
 
 CONV2D_NORMS = {
@@ -13,7 +13,7 @@ CONV2D_NORMS = {
     'instance': (nn.InstanceNorm2d, False),
 }
 
-def build_conv2d_norm(norm: Norm, nc: int):
+def build_conv2d_norm(norm: Optional[str], nc: int):
     '''String-to-module for conv2d normalizations.
 
     INPUT
@@ -22,17 +22,14 @@ def build_conv2d_norm(norm: Norm, nc: int):
         tensor[b, <nc>, h, w]
 
     ARGS
-        norm : string
-            see CONV2D_NORMS for possible values
+        norm : string or null
+            see CONV2D_NORMS for possible string values
         nc : int
             number of input channels
     '''
 
     if norm is None:
         return None, False
-    elif isinstance(norm, nn.Module):
-        return norm, False
-
     cls, norm_has_bias = CONV2D_NORMS[norm]
     return cls(nc), norm_has_bias
 
@@ -117,3 +114,7 @@ class MinibatchStd(nn.Module):
         y = y.reshape(-1, F, 1, 1)
         y = y.repeat(G, 1, H, W)
         return torch.cat([x, y], dim=1)
+
+
+# aliases
+layer_norm = nn.LayerNorm

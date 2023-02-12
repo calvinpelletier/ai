@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from numpy import sqrt
+from typing import Optional, Union, Type
 
 from ai.model.conv2d import conv, Noise
 from ai.model.linear import fc
@@ -14,105 +15,97 @@ from ai.model.etc import Clamp, blur
 
 
 def modconv(
-    nc1,
-    nc2,
-    z_dim,
-    modtype='adalin',
-    k=3,
-    stride=1,
-    actv='mish',
-    clamp=None,
-    noise=False,
-    padtype='zeros',
-    scale_w=False,
-    lr_mult=None,
-):
-    '''modulated convolution
+    nc1: int,
+    nc2: int,
+    z_dim: int,
+    modtype: str = 'adalin',
+    **kw,
+) -> nn.Module:
+    '''Modulated convolution.
 
-    input
+    INPUT
         x : tensor[b, <nc1>, h, w]
         z : tensor[b, <z_dim>]
-    output
+    OUTPUT
         tensor[b, <nc2>, h*, w*] where h* = h / <stride>
 
-    nc1 : int
-        number of input channels
-    nc2 : int
-        number of output channels
-    z_dim : int
-        size of modulating vector
-    modtype : str
-        "adalin" (default)
-            adaptive layer-instance normalization (see paper "U-GAT-IT:
-            Unsupervised Generative Attentional Networks with Adaptive
-            Layer-Instance Normalization for Image-to-Image Translation")
-        "weight"
-            weight modulation (see paper "Analyzing and Improving the Image
-            Quality of StyleGAN")
-    k : int
-        kernel size
-    stride : int or float
-        for strides < 1 (i.e. an up convolution), the input is first resized
-        by a scale factor of 1/stride before using a conv of stride=1
-    actv : str or null
-        activation (see model/actv.py)
-    clamp : float or null
-        clamp all output values between [-clamp, clamp]
-    noise : bool
-        add random noise [b, 1, h, w] of learnable magnitude
-    padtype : str
-        "zeros", "reflect", etc.
-        TODO: support padtype!="zeros" for "weight" modtype
-    scale_w : bool
-        if enabled, scale conv weights by 1/sqrt(nc1 * k**2)
-    lr_mult : float or None
-        learning rate multiplier (scale conv weights and bias)
-        TODO: support lr_mult for "weight" modtype
+    ARGS
+        nc1 : int
+            number of input channels
+        nc2 : int
+            number of output channels
+        z_dim : int
+            size of modulating vector
+        modtype : str
+            "adalin" (default)
+                adaptive layer-instance normalization (see paper "U-GAT-IT:
+                Unsupervised Generative Attentional Networks with Adaptive
+                Layer-Instance Normalization for Image-to-Image Translation")
+            "weight"
+                weight modulation (see paper "Analyzing and Improving the Image
+                Quality of StyleGAN")
+        **kw
+            passed to module
     '''
 
     if modtype == 'adalin':
-        return NormModConv(AdaLIN, nc1, nc2, z_dim, k, stride, actv, clamp,
-            noise, padtype, scale_w, lr_mult)
-
+        return NormModConv(AdaLIN, nc1, nc2, z_dim, **kw)
     elif modtype == 'weight':
-        assert padtype == 'zeros', 'TODO'
-        assert lr_mult is None, 'TODO'
-        return WeightModConv(nc1, nc2, z_dim, k, stride, actv, clamp, noise,
-            scale_w)
-
+        return WeightModConv(nc1, nc2, z_dim, **kw)
     raise NotImplementedError(f'modtype={modtype}')
 
 
 class NormModConv(nn.Module):
-    '''modulate a convolution by modulating the normalization that follows it
+    '''Modulate a convolution by modulating the normalization that follows it.
 
-    input
+    INPUT
         x : tensor[b, <nc1>, h, w]
         z : tensor[b, <z_dim>]
-    output
+    OUTPUT
         tensor[b, <nc2>, h*, w*] where h* = h / <stride>
+
+    ARGS
+        norm_cls : class
+            norm = Norm(<nc2>, <z_dim>)
+        nc1 : int
+            number of input channels
+        nc2 : int
+            number of output channels
+        z_dim : int
+            size of modulating vector
+        k : int
+            kernel size
+        stride : int or float
+            for strides < 1 (i.e. an up convolution), the input is first resized
+            by a scale factor of 1/stride before using a conv of stride=1
+        actv : str or null
+            activation (see model/actv.py)
+        clamp : float or null
+            clamp all output values between [-clamp, clamp]
+        noise : bool
+            add random noise [b, 1, h, w] of learnable magnitude
+        padtype : str
+            "zeros", "reflect", etc.
+        scale_w : bool
+            if enabled, scale conv weights by 1/sqrt(nc1 * k**2)
+        lr_mult : float or null
+            learning rate multiplier (scale conv weights and bias)
     '''
 
     def __init__(s,
-        Norm,
-        nc1,
-        nc2,
-        z_dim,
-        k=3,
-        stride=1,
-        actv='mish',
-        clamp=None,
-        noise=False,
-        padtype='zeros',
-        scale_w=False,
-        lr_mult=None,
+        norm_cls: Type[nn.Module],
+        nc1: int,
+        nc2: int,
+        z_dim: int,
+        k: int = 3,
+        stride: Union[int, float] = 1,
+        actv: Optional[str] = 'mish',
+        clamp: Optional[float] = None,
+        noise: bool = False,
+        padtype: str = 'zeros',
+        scale_w: bool = False,
+        lr_mult: Optional[float] = None,
     ):
-        '''
-        Norm : class
-            norm = Norm(<nc2>, <z_dim>)
-        (see modconv)
-        '''
-
         super().__init__()
 
         s._conv = conv(
@@ -126,8 +119,9 @@ class NormModConv(nn.Module):
             lr_mult=lr_mult,
         )
 
-        s._norm = Norm(nc2, z_dim)
+        s._norm = norm_cls(nc2, z_dim)
 
+        # post-conv/norm operations
         post = []
         if noise:
             post.append(Noise())
@@ -145,27 +139,15 @@ class NormModConv(nn.Module):
 
 
 class WeightModConv(nn.Module):
-    '''modulated convolution from stylegan2
+    '''Modulated convolution from stylegan2.
 
-    input
+    INPUT
         x : tensor[b, <nc1>, h, w]
         z : tensor[b, <z_dim>]
-    output
+    OUTPUT
         tensor[b, <nc2>, h*, w*] where h* = h / <stride>
-    '''
 
-    def __init__(s,
-        nc1,
-        nc2,
-        z_dim,
-        k=3,
-        stride=1,
-        actv='mish',
-        clamp=None,
-        noise=False,
-        scale_w=True,
-    ):
-        '''
+    ARGS
         nc1 : int
             number of input channels
         nc2 : int
@@ -183,21 +165,43 @@ class WeightModConv(nn.Module):
             add random noise [b, 1, h, w] of learnable magnitude
         scale_w : bool
             if enabled, scale conv weights by 1/sqrt(nc1 * k**2)
-        '''
+        lr_mult : float or null
+            learning rate multiplier (scale conv weights and bias)
+    '''
 
+    def __init__(s,
+        nc1: int,
+        nc2: int,
+        z_dim: int,
+        k: int = 3,
+        stride: Union[int, float] = 1,
+        actv: Optional[str] = 'mish',
+        clamp: Optional[float] = None,
+        noise: bool = False,
+        scale_w: bool = True,
+        lr_mult: Optional[float] = None,
+    ):
         super().__init__()
         assert stride >= 1 or stride == .5
         s._stride = stride
 
+        # affine transformation of z before modulating conv
         s._fc = fc(z_dim, nc1, bias_init=1., scale_w=True)
 
+        # params
         s._weight = nn.Parameter(torch.randn([nc2, nc1, k, k]))
-        s._weight_mult = 1. / sqrt(nc1 * k**2) if scale_w else 1.
         s._bias = nn.Parameter(torch.zeros([nc2]))
 
+        # param scaling
+        if lr_mult is None:
+            lr_mult = 1.
+        s._weight_mult = lr_mult / sqrt(nc1 * k**2) if scale_w else lr_mult
+
+        # if upsampling, blur output of the transposed conv
         if s._stride < 1:
             s._blur = blur(up=1, pad=[1,1,1,1], gain=4.)
 
+        # post-conv operations
         post = []
         if noise:
             post.append(Noise())
@@ -226,7 +230,7 @@ class WeightModConv(nn.Module):
         w = w * z.reshape(bs, 1, -1, 1, 1)
         dcoefs = (w.square().sum(dim=[2,3,4]) + 1e-8).rsqrt()
 
-        # pre conv scale
+        # pre-conv scale
         x = x * z.reshape(bs, -1, 1, 1)
 
         # conv
@@ -248,7 +252,7 @@ class WeightModConv(nn.Module):
                 padding=1,
             )
 
-        # post conv scale
+        # post-conv scale
         x = x * dcoefs.reshape(bs, -1, 1, 1)
 
         # bias

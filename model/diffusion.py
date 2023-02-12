@@ -1,21 +1,23 @@
 import torch
 import torch.nn.functional as F
+from torch import Tensor
 import numpy as np
+from typing import Optional
 
 from ai.model.module import Model
 
 
 class DiffusionModel(Model):
-    def __init__(s, shape, n_timesteps=50, **kw):
+    def __init__(s, shape: list[int], n_timesteps: int = 50, **kw):
         super().__init__()
         s._shape = shape
         s._n_timesteps = n_timesteps
         s.noisify = Noisify(shape, n_timesteps, **kw)
 
-    def __len__(s):
+    def __len__(s) -> int:
         return s._n_timesteps
 
-    def sample(s, n, frame_rate=None):
+    def sample(s, n: int, frame_rate: Optional[int] = None) -> np.ndarray:
         sample = s.gen_noise(n)
 
         if frame_rate is None:
@@ -31,26 +33,25 @@ class DiffusionModel(Model):
         frames.append(sample.cpu().numpy())
         return np.stack(frames)
 
-    def denoise(s, x, t):
-        assert isinstance(t, int)
+    def denoise(s, x: Tensor, t: int) -> Tensor:
         t = torch.full([x.shape[0]], t, dtype=torch.long, device=x.device)
         noise_pred = s(x, t)
         return s.noisify.denoise(x, t[0], noise_pred)
 
-    def denoise_iter(s):
+    def denoise_iter(s) -> list[int]:
         return list(range(s._n_timesteps))[::-1]
 
-    def gen_noise(s, bs):
+    def gen_noise(s, bs: int) -> Tensor:
         return torch.randn(bs, *s._shape, device=s.get_device())
 
 
 class Noisify(torch.nn.Module):
     def __init__(s,
-        shape,
-        n_timesteps,
-        beta_start=0.0001,
-        beta_end=0.02,
-        beta_schedule='linear',
+        shape: list[int],
+        n_timesteps: int,
+        beta_start: float = 0.0001,
+        beta_end: float = 0.02,
+        beta_schedule: str = 'linear',
     ):
         super().__init__()
         assert len(shape) == 1, 'TODO'
@@ -92,12 +93,12 @@ class Noisify(torch.nn.Module):
             torch.sqrt(alphas) / (1. - alphas_cumprod))
         s.register_buffer('_posterior_mean_coef2', posterior_mean_coef2)
 
-    def __call__(s, x, t, noise):
+    def __call__(s, x: Tensor, t: int, noise: Tensor) -> Tensor:
         s1 = s._sqrt_alphas_cumprod[t].reshape(-1, 1)
         s2 = s._sqrt_one_minus_alphas_cumprod[t].reshape(-1, 1)
         return s1 * x + s2 * noise
 
-    def denoise(s, x, t, pred):
+    def denoise(s, x: Tensor, t: int, pred: Tensor) -> Tensor:
         pred_original_sample = s._reconstruct_x0(x, t, pred)
         pred_prev_sample = s._q_posterior(pred_original_sample, x, t)
 

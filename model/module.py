@@ -1,7 +1,6 @@
-'''models and modules'''
-
+from __future__ import annotations
 import torch
-from typing import Union
+from typing import Union, Optional
 
 from ai.model.param import param_init
 from ai.path import PathLike
@@ -26,7 +25,7 @@ class Model(torch.nn.Module):
             set "requires_grad" flag of every parameter in model
     '''
 
-    def __init__(s, net: Union[torch.nn.Module, None] = None):
+    def __init__(s, net: Optional[torch.nn.Module] = None):
         '''
         net : module or null
             the top-level module of the model (if net is null, user must
@@ -41,7 +40,7 @@ class Model(torch.nn.Module):
             raise NotImplementedError()
         return s._net(*a, **kw)
 
-    def init(s, path: Union[PathLike, None] = None):
+    def init(s, path: Optional[PathLike] = None) -> Model:
         '''initialize parameters
 
         path : pathlike or null
@@ -77,7 +76,6 @@ class Model(torch.nn.Module):
 
 
 # aliases
-class Module(torch.nn.Module):
-    pass
+Module = torch.nn.Module
 def modules(x):
     return torch.nn.ModuleList(x)

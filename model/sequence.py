@@ -75,6 +75,10 @@ class Pyramid(nn.Module):
                     number of input channels
                 nc2 : int
                     number of output channels
+
+    ATTRIBUTES
+        nc_in : int
+        nc_out : int
     '''
 
     def __init__(s,

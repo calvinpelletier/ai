@@ -1,6 +1,7 @@
-'''converting features maps to vectors'''
+'''Converting features maps to vectors.'''
 
 import torch
+from typing import Optional
 
 from ai.model.linear import fc
 from ai.model.conv2d import conv
@@ -9,15 +10,15 @@ from ai.model.etc import flatten, global_avg
 from ai.model.norm import MinibatchStd
 
 
-def simple(nc_in, n_out, actv=None):
-    '''feature map to vector via: global avg -> flatten -> fully connected
+def simple(nc_in: int, n_out: int, actv: Optional[str] = None):
+    '''Feature map to vector via: global avg -> flatten -> fully connected.
 
-    input
+    INPUT
         tensor[b, <nc_in>, h, w]
-    output
+    OUTPUT
         tensor[b, <n_out>]
 
-    args
+    ARGS
         nc_in : int
             number of input channels
         n_out : int
@@ -34,24 +35,24 @@ def simple(nc_in, n_out, actv=None):
 
 
 def mbstd(
-    res,
-    nc,
-    n_out=1,
-    mbstd_group_size=4,
-    mbstd_nc=1,
-    actv='lrelu',
-    final_actv=None,
-    clamp=256,
-    scale_w=True,
+    res: int,
+    nc: int,
+    n_out: int = 1,
+    mbstd_group_size: int = 4,
+    mbstd_nc: int = 1,
+    actv: str = 'lrelu',
+    final_actv: Optional[str] = None,
+    clamp: Optional[int | float] = 256,
+    scale_w: bool = True,
 ):
-    '''feature map to vector commonly used by discriminators
+    '''Feature map to vector commonly used by discriminators.
 
-    input
+    INPUT
         tensor[b, <nc>, <res>, <res>]
-    output
+    OUTPUT
         tensor[b, <n_out>]
 
-    args
+    ARGS
         res : int
             input resolution [b, c, <res>, <res>]
         nc : int
@@ -60,9 +61,10 @@ def mbstd(
             output size [b, <n_out>]
         mbstd_group_size : int
         mbstd_nc : int
-        actv : str or null
+        actv : str
             activation function used for intermediate steps
         final_actv : str or null
+            final activation function
     '''
 
     return seq(

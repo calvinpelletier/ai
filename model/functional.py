@@ -1,13 +1,14 @@
-'''functional operations'''
+'''Functional operations.'''
 
 import torch
 import torch.nn.functional as F
+from torch import Tensor
 
 
 ALIGN_CORNERS_MODES = ['linear', 'bilinear', 'trilinear', 'bicubic']
 
-def resample(x, stride, mode='bilinear'):
-    '''resample x by scale factor of 1/stride'''
+def resample(x: Tensor, stride: int | float, mode: str = 'bilinear'):
+    '''Resample x by scale factor of 1/stride.'''
 
     return F.interpolate(
         x,
@@ -17,13 +18,13 @@ def resample(x, stride, mode='bilinear'):
     )
 
 
-def flatten(x, keep_batch_dim=True):
+def flatten(x: Tensor, keep_batch_dim: bool = True):
     if keep_batch_dim:
         return torch.flatten(x, 1)
     return torch.flatten(x)
 
 
-def normalize_2nd_moment(x, dim=1, eps=1e-8):
+def normalize_2nd_moment(x: Tensor, dim: int = 1, eps: float = 1e-8):
     return x * (x.square().mean(dim=dim, keepdim=True) + eps).rsqrt()
 
 

@@ -2,25 +2,16 @@ import ai.model as m
 
 
 class ImgAutoencoder(m.Model):
-    '''image autoencoder
+    '''Image autoencoder.
 
-    input
+    INPUT
         tensor[b, c, h, w]
 
-    output
+    OUTPUT
         tensor[b, c, h, w]
             range: [-1, 1]
-    '''
 
-    def __init__(s,
-        imsize,
-        bottleneck,
-        nc_min=32,
-        nc_max=512,
-        enc_block=lambda _, nc1, nc2: m.resblk(nc1, nc2, stride=2),
-        dec_block=lambda _, nc1, nc2: m.resblk(nc1, nc2, stride=.5),
-    ):
-        '''
+    ARGS
         imsize : int
             input image size
         bottleneck : int
@@ -40,8 +31,16 @@ class ImgAutoencoder(m.Model):
                     number of output channels
         dec_block : callable
             same as enc_block but for the decoder
-        '''
+    '''
 
+    def __init__(s,
+        imsize: int,
+        bottleneck: int,
+        nc_min: int = 32,
+        nc_max: int = 512,
+        enc_block=lambda size, nc1, nc2: m.resblk(nc1, nc2, stride=2),
+        dec_block=lambda size, nc1, nc2: m.resblk(nc1, nc2, stride=.5),
+    ):
         super().__init__()
 
         s.encode = m.seq(

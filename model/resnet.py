@@ -1,22 +1,21 @@
 '''components of ResNets'''
 
 from torch import nn
-from torch.nn import Module
+from typing import Optional, Union
 
 from ai.model.sequence import seq
 from ai.model.conv2d import conv
 from ai.model.etc import resample, res, global_avg
-from ai.model.typing import Stride, Actv, Norm
 
 
 def resblk(
     nc1: int,
     nc2: int,
-    stride: Stride = 1,
-    actv: Actv = 'mish',
-    norm: Norm = 'batch',
+    stride: Union[int, float] = 1,
+    actv: Optional[str] = 'mish',
+    norm: Optional[str] = 'batch',
     se: bool = True,
-) -> Module:
+) -> nn.Module:
     '''ResNet block.
 
     INPUT
@@ -32,9 +31,9 @@ def resblk(
         stride : int or float
             for strides < 1 (i.e. an up convolution), the input is first resized
             by a scale factor of 1/stride before using a conv of stride=1
-        actv : str or Module or null
+        actv : str or null
             activation (see model/actv.py)
-        norm : str or Module or null
+        norm : str or null
             normalization (see model/norm.py)
         se : bool
             add squeeze-excitation op (self-modulate using global information)
@@ -62,9 +61,9 @@ def resblk_group(
     n: int,
     nc1: int,
     nc2: int,
-    stride: Stride = 1,
+    stride: Union[int, float] = 1,
     **kw,
-) -> Module:
+) -> nn.Module:
     '''Sequence of resnet blocks (but only striding once).
 
     INPUT
@@ -109,7 +108,7 @@ class SqueezeExcite(nn.Module):
             intermediate activation function
     '''
 
-    def __init__(s, nc: int, reduction: int = 16, actv: Actv = 'mish'):
+    def __init__(s, nc: int, reduction: int = 16, actv: str = 'mish'):
         super().__init__()
         reduced = max(1, nc // reduction)
         s._net = seq(
@@ -121,5 +120,5 @@ class SqueezeExcite(nn.Module):
     def forward(s, x):
         return x * s._net(x)
 
-def se(*a, **kw) -> Module:
+def se(*a, **kw) -> nn.Module:
     return SqueezeExcite(*a, **kw)

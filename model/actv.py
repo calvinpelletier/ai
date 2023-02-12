@@ -1,6 +1,7 @@
-'''activation functions'''
+'''Activation functions.'''
 
 from torch import nn
+from typing import Optional
 
 
 ACTIVATIONS = {
@@ -13,15 +14,16 @@ ACTIVATIONS = {
     'tanh': nn.Tanh,
 }
 
-def build_actv(actv):
-    '''string-to-module for activation functions
+def build_actv(actv: Optional[str]):
+    '''String-to-module for activation functions.
 
-    actv : string
-        see ACTIVATIONS for possible values
+    ARGS
+        actv : string or null
+            see ACTIVATIONS for possible string values
     '''
 
     if actv is None:
         return None
-    if actv not in ACTIVATIONS:
-        raise ValueError(f'unknown actv: {actv}')
-    return ACTIVATIONS[actv]()
+    if actv in ACTIVATIONS:
+        return ACTIVATIONS[actv]()
+    raise ValueError(f'unknown actv: {actv}')

@@ -4,24 +4,26 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import numpy as np
+from typing import Optional
 
 from ai.model.actv import build_actv
 
 
 def fc(
-    n1,
-    n2,
-    actv=None,
-    bias=True,
-    bias_init=None,
-    scale_w=False,
-    lr_mult=None,
+    n1: int,
+    n2: int,
+    actv: Optional[str] = None,
+    bias: bool = True,
+    bias_init: Optional[float] = None,
+    scale_w: bool = False,
+    lr_mult: Optional[float] = None,
+    dropout: Optional[float] = None,
 ):
-    '''fully connected layer
+    '''Fully connected layer.
 
-    input
+    INPUT
         tensor[b, <n1>]
-    output
+    OUTPUT
         tensor[b, <n2>]
 
     operations in order:
@@ -32,8 +34,9 @@ def fc(
                 a custom implementation that can handle learning rate
                 multiplying, scaling weights, and initializing bias
         activation function
+        dropout
 
-    args
+    ARGS
         n1 : int
             input size
         n2 : int
@@ -46,44 +49,37 @@ def fc(
             optional initial value for bias
         scale_w : bool
             if enabled, scale weights by 1/sqrt(n1)
-        lr_mult : float or None
+        lr_mult : float or null
             learning rate multiplier (scale weights and bias)
+        dropout : float or null
     '''
 
     if scale_w or lr_mult is not None or bias_init is not None:
         linear = Linear(n1, n2, bias, bias_init, scale_w, lr_mult)
     else:
         linear = nn.Linear(n1, n2, bias=bias)
+    ops = [linear]
 
-    if actv is None:
-        return linear
-    return nn.Sequential(linear, build_actv(actv))
+    if actv is not None:
+        ops.append(build_actv(actv))
+
+    if dropout is not None and dropout != 0.:
+        ops.append(nn.Dropout(dropout))
+
+    if len(ops) > 1:
+        return nn.Sequential(*ops)
+    return ops[0]
 
 
 class Linear(nn.Module):
     def __init__(s,
-        n1,
-        n2,
-        bias=True,
-        bias_init=None,
-        scale_w=False,
-        lr_mult=None,
+        n1: int,
+        n2: int,
+        bias: bool = True,
+        bias_init: Optional[float] = None,
+        scale_w: bool = False,
+        lr_mult: Optional[float] = None,
     ):
-        '''
-        n1 : int
-            input size
-        n2 : int
-            output size
-        bias : bool
-            enable bias (default true)
-        bias_init : float or null
-            optional initial value for bias
-        scale_w : bool
-            if enabled, scale weights by 1/sqrt(n1)
-        lr_mult : float or None
-            learning rate multiplier (scale weights and bias)
-        '''
-
         super().__init__()
         if lr_mult is None:
             lr_mult = 1.
