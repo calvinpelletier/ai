@@ -1,6 +1,5 @@
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.game import TicTacToe
-from ai.util import assert_shape, assert_bounds
 from ai.data.buffer import ReplayBuffer
 from ai.infer import Inferencer
 from ai.data.play import SelfPlay

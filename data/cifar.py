@@ -6,16 +6,21 @@ import numpy as np
 from ai.data.dataset import Dataset
 from ai.path import dataset_path, PathLike
 from ai.util.img import normalize
+from ai.util import print_info
 
 
-def mnist_dataset(path: PathLike = 'mnist') -> Dataset:
-    '''MNIST handwritten digits dataset.
+CLASSES = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse',
+    'ship', 'truck')
 
-    DATA (n=70_000)
-        x : [n, 1, 28, 28] (uint8)
-            greyscale image
+
+def cifar10(path: PathLike = 'cifar10'):
+    '''CIFAR10 object classification dataset.
+
+    DATA (n=60_000)
+        x : [n, 3, 32, 32] (uint8)
+            RGB image
         y : [n] (uint8)
-            label (0-9)
+            label (0-9), see CLASSES const above
 
     ARGS
         path : str or Path
@@ -37,7 +42,7 @@ def mnist_dataset(path: PathLike = 'mnist') -> Dataset:
     return Dataset(
         np.load(path),
         postprocess={'x': normalize},
-        default_split=[60_000, 10_000],
+        default_split=[50_000, 10_000],
     )
 
 
@@ -45,15 +50,15 @@ def mnist_dataset(path: PathLike = 'mnist') -> Dataset:
 
 
 def _download_and_convert(path):
-    tmp_path = Path('/tmp/mnist_dataset')
-    train = _load_torchvision_mnist(tmp_path, True)
-    test = _load_torchvision_mnist(tmp_path, False)
+    tmp_path = Path('/tmp/cifar10_dataset')
+    train = _load_torchvision_cifar10(tmp_path, True)
+    test = _load_torchvision_cifar10(tmp_path, False)
 
-    print('\nconverting mnist data...')
+    print('\nconverting cifar10 data...')
 
     n = len(train) + len(test)
     ds = {
-        'x': np.empty([n, 1, 28, 28], dtype=np.uint8),
+        'x': np.empty([n, 3, 32, 32], dtype=np.uint8),
         'y': np.empty([n], dtype=np.uint8),
     }
 
@@ -76,9 +81,9 @@ def _store(ds, i, data):
     return i + 1
 
 
-def _load_torchvision_mnist(path, train):
-    return datasets.MNIST(
-        path,
+def _load_torchvision_cifar10(path, train):
+    return datasets.CIFAR10(
+        root=path,
         train=train,
         download=not path.exists(),
         transform=transforms.ToTensor(),

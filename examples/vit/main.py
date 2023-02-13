@@ -2,7 +2,7 @@ import ai
 from ai.examples.vit.model import VisionTransformer
 
 
-def mnist_vit(
+def vit_cifar10(
     output_path,
     device='cuda',
     batch_size=64,
@@ -10,23 +10,21 @@ def mnist_vit(
     steps=5000,
     **model_kw,
 ):
-    val_ds, train_ds = ai.data.mnist_dataset().split(.1, .9)
+    val_ds, train_ds = ai.data.cifar10().split(.1, .9)
     train_loader = train_ds.loader(batch_size, device, train=True)
     val_loader = val_ds.loader(256, device, train=False)
 
     trial = ai.Trial(output_path, clean=True, val_data=val_loader)
 
     model = VisionTransformer(
-        imsize=28,
-        patch_size=7,
+        imsize=32,
+        patch_size=8,
         n_out=10,
         dim=64,
         n_blocks=2,
         n_heads=2,
         head_dim=64,
         mlp_dim=64,
-        nc_in=1,
-        dropout=.1,
     ).init().to(device)
     opt = ai.opt.adam(model, lr=lr)
 
@@ -38,4 +36,4 @@ def mnist_vit(
 
 
 if __name__ == '__main__':
-    ai.run(mnist_vit)
+    ai.run(vit_cifar10)

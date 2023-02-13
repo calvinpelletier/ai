@@ -1,6 +1,6 @@
+from ai.util.testing import *
 from ai.data.util import create_data_loader
 from ai.data.play import SelfPlay
-from ai.util import assert_shape, assert_bounds
 from ai.game import TicTacToe
 from ai.examples.alphazero import AlphaZeroPlayer, AlphaZeroMLP
 from ai.config import Config

@@ -1,8 +1,7 @@
 import pytest
 
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.data import ImgDataset
-from ai.util import assert_shape, assert_bounds
 
 
 def test_ffhq_dataset():

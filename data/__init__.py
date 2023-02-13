@@ -1,3 +1,4 @@
+from ai.data.cifar import cifar10
 from ai.data.dataset import Dataset
 from ai.data.img import ImgDataset
 from ai.data.mnist import mnist_dataset

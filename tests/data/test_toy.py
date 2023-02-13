@@ -1,8 +1,8 @@
 import torch
 
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.data.toy import moons_dataset
-from ai.util import assert_shape, assert_bounds, print_info
+from ai.util import print_info
 
 
 def test_moons_dataset():

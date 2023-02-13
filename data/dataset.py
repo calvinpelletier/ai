@@ -1,64 +1,92 @@
 import torch
 import numpy as np
+from typing import Union, Optional, Callable, Iterable
 
 from ai.data.util import create_data_loader
 
 
+ArrayLike = Union[list, tuple, np.ndarray]
+
+
 class Dataset:
-    def __init__(s, data, preprocess=None, postprocess=None):
+    def __init__(s,
+        data: ArrayLike | dict[str, ArrayLike],
+        preprocess: Optional[Callable] = None,
+        postprocess: Optional[Callable] = None,
+        default_split: Optional[list[int]] = None,
+    ):
         '''
         data : array-like or dict of array-like
             a representation of the underlying dataset that can be held in
             memory all at once (e.g. a list of paths to image files)
         preprocess : callable or null
             a function used by data workers (e.g. read image from disk)
-            args
+            args:
                 an item from <data>
-            returns
-                tensor or ndarray (or list/dict of them)
+            returns:
+                tensor/ndarray or dict of tensor/ndarray
         postprocess : callable or null
             a function called after the data has been transfered to the device
             (e.g. normalize an image tensor)
-            args
+            args:
                 tensor or dict of tensors
-            returns
+            returns:
                 tensor or dict of tensors
+        default_split : list of ints or null
+            a list of ints indicating the sizes of the subdatasets when .split()
+            is called without any arguments
+            NOTE: sum(default_split) should equal len(data)
         '''
 
+        # convert a loaded npz file to a dict
         if isinstance(data, np.lib.npyio.NpzFile):
             data = {k: data[k] for k in data.keys()}
-        s._data = data
 
+        s._data = data
         s._preprocess = preprocess
         s._postprocess = postprocess
+        s._default_split = default_split
 
         s._n = _get_length(s._data)
 
-    def __len__(s):
+        if default_split is not None:
+            assert sum(default_split) == s._n
+
+    def __len__(s) -> int:
         return s._n
 
-    def length(s, batch_size):
-        '''the length accounting for dropping the last incomplete batch
-
-        args
-            batch_size : int
-        returns
-            int
-        '''
+    def length(s, batch_size: int) -> int:
+        '''The length accounting for dropping the last incomplete batch.'''
 
         return (s._n // batch_size) * batch_size
 
-    def split(s, *ratio):
-        '''split the dataset into subdatasets
+    def split(s, *ratio) -> 'list[Dataset]':
+        '''Split the dataset into subdatasets.
 
-        args
-            *ratio : list of float
-                the relative size of the subdatasets (the sum should be 1)
-        returns
-            list of Dataset
+        ARGS
+            *ratio : optional list of float
+                The relative size of the subdatasets (the sum should be 1).
+                If not provided, uses the default_split given to the constructor
         '''
 
-        assert len(ratio) > 1
+        # default split ~
+        if not ratio:
+            if s._default_split is None:
+                raise ValueError('''default_split needs to be provided to the
+                    constructor in order to use split() without any
+                    arguments''')
+
+            ret = []
+            x, y = 0, 0
+            for n in s._default_split[:-1]:
+                x = y
+                y += n
+                ret.append(s._create_subdataset(x, y))
+            ret.append(s._create_subdataset(y, None))
+            return ret
+        # ~
+
+        # custom split ~
         if not np.isclose(sum(ratio), 1.):
             raise ValueError(f'ratio ({str(ratio)}) != 1.')
 
@@ -70,39 +98,39 @@ class Dataset:
             ret.append(s._create_subdataset(x, y))
         ret.append(s._create_subdataset(y, None))
         return ret
+        # ~
 
-    def sample(s, n, device='cuda'):
-        '''get n samples
+    def sample(s, n: int, device: torch.device = 'cuda'):
+        '''Load n samples.
 
-        args
+        ARGS
             n : int
                 number of samples
-            device : str
-        returns
+            device : str or torch.device
+        RETURNS
             tensor[n, ...] or list/dict of tensor[n, ...]
         '''
 
         return next(iter(s.loader(n, device)))
 
     def loader(s,
-        batch_size,
-        device='cuda',
-        n_workers=1,
-        train=False,
-        drop_last=True,
-    ):
-        '''create a data loader of this dataset
+        batch_size: int,
+        device: torch.device = 'cuda',
+        n_workers: int = 1,
+        train: bool = False,
+        drop_last: bool = True,
+    ) -> Iterable:
+        '''Create a data loader for this dataset.
 
-        args
+        ARGS
             batch_size : int
             device : str
             n_workers : int
+                number of data workers
             train : bool
                 shuffle and loop infinitely if true
             drop_last: bool
                 drop last batch if incomplete
-        returns
-            iterable
         '''
 
         return create_data_loader(

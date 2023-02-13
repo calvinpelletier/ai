@@ -71,7 +71,7 @@ There are 3 parts to `ai.model`:
 
 2) `ai.model.f.*` which contains functional operations that act directly on tensors
 
-3) Everything else is a function that returns a torch module. This avoids the need to remember which operations are classes and which are built via functions. And as a bonus, it gives model building a clean, lowercase aesthetic.
+3) Everything else is a function that returns a torch module. This avoids the need to remember which operations are classes and which are built via functions. And as a bonus, it has a clean, lowercase aesthetic.
 
 Here are three functionally identical ways to use `ai.model`:
 
@@ -134,15 +134,13 @@ class ImgAutoencoder(m.Model):
         return self.decode(self.encode(x))
 ```
 
-[StyleGAN2](examples/stylegan2/model.py)
+GAN example: [StyleGAN2](examples/stylegan2/model.py)
 
-[Vision Transformer](examples/vit/model.py)
+Transformer example: [Vision Transformer](examples/vit/model.py)
 
-[AlphaZero](examples/alphazero/model.py)
+RL examples: [AlphaZero](examples/alphazero/model.py) and [MuZero](examples/muzero/model.py)
 
-[MuZero](examples/muzero/model.py)
-
-[Diffusion](examples/diffusion/model.py)
+Diffusion example: [Diffusion MLP](examples/diffusion/model.py)
 
 ### Model API
 

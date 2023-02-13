@@ -1,24 +1,24 @@
 from torchvision import datasets, transforms
 
-from ai.path import dataset_path
+from ai.path import dataset_path, PathLike
 from ai.util import img as img_util
 from ai.data.dataset import Dataset
 
 
 class ImgDataset(Dataset):
-    '''dataset of images
+    '''Dataset of images.
 
-    file structure:
-    <path>/<imsize>/data/*.png (image files)
-    <path>/<imsize>/metadata/* (e.g. FID stats)
+    File structure:
+        <path>/<imsize>/data/*.png (image files)
+        <path>/<imsize>/metadata/* (e.g. for caching FID info)
     '''
 
-    def __init__(s, path, imsize):
+    def __init__(s, path: PathLike, imsize: int):
         '''
-        path : str
-            if path starts with /
+        path : str or Path
+            if path starts with "/":
                 exact path to dataset root
-            else
+            else:
                 relative path from AI_DATASETS_PATH environment variable
         imsize : int
             target image size (if <path>/<imsize> doesnt exist, it will be
