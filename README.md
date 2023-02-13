@@ -2,7 +2,7 @@
 
 A PyTorch-based machine learning library designed to make it easy for independent researchers/enthusiasts to experiment with ML concepts.
 
-## Model
+# Model
 
 The `ai.model` module contains various functions/classes for creating PyTorch models.
 
@@ -73,7 +73,7 @@ There are 3 parts to `ai.model`:
 
 3) Everything else is a function that returns a torch module. This avoids the need to remember which operations are classes and which are built via functions. And as a bonus, it has a clean, lowercase aesthetic.
 
-Here are three functionally identical ways to use `ai.model`:
+Here are three functionally identical ways to use the `Model` class:
 
 ```python
 import ai.model as m
@@ -147,3 +147,56 @@ Diffusion example: [Diffusion MLP](examples/diffusion/model.py)
 Currently, the two core building blocks are `fc` for fully-connected layers and `conv` for convolution layers. They are essentially `torch.nn.Linear` and `torch.nn.Conv2d` respectively, with optional additonal operations in sequence (e.g. activation function). Certain args switch it to a custom implementation of `Linear` and `Conv2d` (e.g. learning rate scaling).
 
 Full API reference coming soon.
+
+# Infer
+
+The `ai.infer` module can be used to setup inference workers and clients.
+
+```python
+inferencer = ai.infer.Inferencer(model) # launch inference worker
+y = inferencer(x) # call worker
+del inferencer # stop worker
+```
+
+A more detailed example:
+
+```python
+import ai
+
+# using an MNIST model as an example
+model = ai.examples.mnist.Model().init()
+
+# spawn a worker process
+inferencer = ai.infer.Inferencer(
+    model,
+    'cuda', # the worker will move the model to this device
+    64, # the maximum inference batch size (will be less if there arent
+        # sufficient requests available at the moment)
+)
+
+# the inferencer can be used as if it is the model
+x = torch.randn(1, 1, 28, 28)
+y1 = model(x)
+y2 = inferencer(x)
+assert (y1 == y2).all()
+
+# update the parameters of the worker's model
+inferencer.update_params(model.state_dict())
+
+# you can also create an InferencerClient which can make inference requests but
+# doesn't hold a reference to the worker (useful when passing it to other
+# processes e.g. when data workers need to make inference requests)
+client = inferencer.create_client()
+y = client(x)
+
+# requests can be made asynchronously
+request_id = client.infer_async(x)
+y = client.wait_for_resp(request_id)
+
+# you can stop the worker directly via
+del inferencer
+# or you can just let `inferencer` go out of scope
+```
+
+For more information, see [Inferencer](infer/inferencer.py) and [InferenceClient](infer/client.py).
+

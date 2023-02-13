@@ -12,13 +12,13 @@ def test_inferencer():
     assert_parity(model, inferencer)
 
 
-def test_weight_update():
+def test_param_update():
     model = Model(fc(8, 8)).init().eval()
     inferencer = Inferencer(model, batch_size=1)
 
     # reinitialize model params and send to inferencer
     model.init()
-    inferencer.update_weights(model.state_dict())
+    inferencer.update_params(model.state_dict())
     sleep(2)
 
     assert_parity(model, inferencer)

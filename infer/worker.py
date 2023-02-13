@@ -12,6 +12,9 @@ from ai.util.timer import Timer
 SLEEP = 0.1
 
 
+# TODO: comments, docstrings, type hints
+
+
 def inference_worker(model, device, batch_size, redis_cfg, debug):
     worker = InferenceWorker(model, device, batch_size, redis_cfg, debug)
     worker.run()
@@ -33,7 +36,7 @@ class InferenceWorker:
             while 1:
                 s._respond_to_pings()
                 s._respond_to_debugs()
-                s._check_for_weights_update()
+                s._check_for_params_update()
                 s._run_batch()
 
     def _respond_to_pings(s):
@@ -51,10 +54,10 @@ class InferenceWorker:
             assert s._debug
             s._send_resp(req_id, s._info.export())
 
-    def _check_for_weights_update(s):
-        weight_updates = s._get_reqs(QUEUES.update, 0, math.inf)
-        if weight_updates:
-            s._model.load_state_dict(weight_updates[-1])
+    def _check_for_params_update(s):
+        param_updates = s._get_reqs(QUEUES.update, 0, math.inf)
+        if param_updates:
+            s._model.load_state_dict(param_updates[-1])
 
     def _run_batch(s):
         # fetch
@@ -112,6 +115,7 @@ async def _async_wait_for_req(broker, queue, timeout=None):
     return req
 
 
+# TODO: add comments
 class _Batcher:
     def __init__(s, batch_size, device):
         s.batch_size = batch_size
