@@ -5,6 +5,10 @@ from ai.infer import Inferencer
 from ai.data.buffer import ReplayBuffer
 
 
+# TODO: comments, docstrings, type hints
+# TODO: refactor?
+
+
 class RLTrainer(Trainer):
     def __init__(s, cfg, env, agent, data_generator):
         s._refresh_interval = cfg.train.refresh

@@ -2,6 +2,10 @@ import torch
 from copy import deepcopy
 
 
+# TODO: complete refactor (maybe move gradient clipping to trainer?)
+# TODO: comments, docstrings, type hints
+
+
 class Opt:
     def __init__(s, opt_cls, params, grad_clip=False, **kw):
         s._opt = opt_cls(params, **kw)
@@ -21,15 +25,18 @@ class Opt:
     def state_dict(s):
         return s._opt.state_dict()
 
+    def load_state_dict(s, sd):
+        s._opt.load_state_dict(sd)
 
-def sgd(model, **kw):
-    return Opt(torch.optim.SGD, model.parameters(), **kw)
 
-def adam(model, **kw):
-    return Opt(torch.optim.Adam, model.parameters(), **kw)
+def sgd(model, lr=1e-4, **kw):
+    return Opt(torch.optim.SGD, model.parameters(), lr=lr, **kw)
 
-def adamw(model, **kw):
-    return Opt(torch.optim.AdamW, model.parameters(), **kw)
+def adam(model, lr=1e-4, **kw):
+    return Opt(torch.optim.Adam, model.parameters(), lr=lr, **kw)
+
+def adamw(model, lr=1e-4, **kw):
+    return Opt(torch.optim.AdamW, model.parameters(), lr=lr, **kw)
 
 
 OPTS = {
@@ -47,3 +54,6 @@ def build(cfg, model):
     del cfg_dict['type']
 
     return Opt(opt_cls, model.parameters(), **cfg_dict)
+
+
+OptLike = Opt | torch.optim.Optimizer

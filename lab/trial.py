@@ -1,7 +1,7 @@
 import torch
 from functools import partial
 
-from ai.train.log import Tensorboard
+from ai.util.logger import Tensorboard
 from ai.train.hook import Hook
 from ai.lab.base import LabEntity
 from ai.train.schedule import Logarithmic

@@ -1,18 +1,39 @@
 import torch
 import torch.nn.functional as F
+from typing import Optional, Callable
 
 from ai.train.env import MultiEnv
 from ai.train.util import on_interval
+from ai.train.log import log
 
 
 class Gan(MultiEnv):
+    '''Training environment for Generative Adversarial Networks.'''
+
     def __init__(s,
-        aug=None,
-        g_reg_interval=None,
-        g_reg_weight=1.,
-        d_reg_interval=16,
-        d_reg_weight=1.,
+        aug: Optional[Callable] = None,
+        g_reg_interval: Optional[int] = None,
+        g_reg_weight: float = 1.,
+        d_reg_interval: Optional[int] = 16,
+        d_reg_weight: float = 1.,
     ):
+        '''
+        aug : callable or null
+            optional augmentation before calling the discriminator
+            TODO: adaptive discriminator augmentation
+        g_reg_interval : int or null
+            perform regularization for the generator every g_reg_interval steps.
+            NOTE: no default implementation. for an example, see path length
+            regularization in ai/examples/stylegan2/train.py
+        g_reg_weight : float
+            weight of the generator's regularization loss
+        d_reg_interval : int or null
+            perform regularization for the discrim every d_reg_interval steps.
+            default is gradient penalty (https://arxiv.org/pdf/1704.00028.pdf)
+        d_reg_weight : float
+            weight of the discriminator's regularization loss
+        '''
+
         s._aug = aug
         s._g_reg_interval, s._g_reg_weight = g_reg_interval, g_reg_weight
         s._d_reg_interval, s._d_reg_weight = d_reg_interval, d_reg_weight
@@ -22,12 +43,12 @@ class Gan(MultiEnv):
     def G(s, models, batch, step=0):
         # main
         loss = s._g_main(models, batch)
-        s.log('loss.G.main', loss)
+        log('G.loss.main', loss)
 
         # regularize
         if on_interval(step, s._g_reg_interval):
             reg_loss = s._g_reg(models, batch)
-            s.log('loss.G.reg', reg_loss)
+            log('G.loss.reg', reg_loss)
             loss += reg_loss * s._g_reg_weight
 
         return loss
@@ -47,12 +68,12 @@ class Gan(MultiEnv):
     def D(s, models, batch, step=0):
         # main
         loss = s._d_main(models, batch)
-        s.log('loss.D.main', loss)
+        log('D.loss.main', loss)
 
         # regularize
         if on_interval(step, s._d_reg_interval):
             reg_loss = s._d_reg(models, batch)
-            s.log('loss.D.reg', reg_loss)
+            log('D.loss.reg', reg_loss)
             loss += reg_loss * s._d_reg_weight
 
         return loss
