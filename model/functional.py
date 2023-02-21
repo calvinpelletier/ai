@@ -3,11 +3,12 @@
 import torch
 import torch.nn.functional as F
 from torch import Tensor
+from typing import Union
 
 
 ALIGN_CORNERS_MODES = ['linear', 'bilinear', 'trilinear', 'bicubic']
 
-def resample(x: Tensor, stride: int | float, mode: str = 'bilinear'):
+def resample(x: Tensor, stride: Union[int, float], mode: str = 'bilinear'):
     '''Resample x by scale factor of 1/stride.'''
 
     return F.interpolate(

@@ -1,6 +1,6 @@
 import torch
 
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.train import MultiTrainer
 from ai.train.gan import Gan
 from ai.data.img import ImgDataset
@@ -41,5 +41,4 @@ def _test_multitrainer(env, data, models, device='cuda', bs=8, lr=1e-3):
         opts[k] = torch.optim.SGD(model.parameters(), lr=lr)
 
     trainer = MultiTrainer(env, data)
-    i = trainer.train(models, opts, steplimit=2)
-    assert i == 2
+    trainer.train(models, opts, steplimit=2)

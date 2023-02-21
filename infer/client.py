@@ -1,7 +1,7 @@
 import asyncio
 from redis import Redis
 from uuid import UUID
-from typing import Optional
+from typing import Optional, Union, List
 
 from ai.util import gen_uuid
 from ai.util.timer import Timer
@@ -38,7 +38,7 @@ class InferenceClient:
     method instead of using __call__ multiple times in succession.
     '''
 
-    def __init__(s, redis_cfg: list | tuple):
+    def __init__(s, redis_cfg: Union[list, tuple]):
         '''
         redis_cfg : list/tuple of length 3
             redis host (str), redis port (int), db number (int)
@@ -109,7 +109,7 @@ class InferenceClient:
         s._add_to_queue(QUEUES.infer, (req_id, args, kwargs))
         return req_id
 
-    def multi_infer_async(s, reqs: list[tuple]) -> list[UUID]:
+    def multi_infer_async(s, reqs: List[tuple]) -> List[UUID]:
         '''Same as infer_async but for multiple requests.
 
         Use InferenceClient.wait_for_resps(request_ids) to get response.
@@ -138,7 +138,7 @@ class InferenceClient:
         resp = asyncio.run(_async_wait_for_resp(s._broker, req_id, timeout))
         return decode(resp)
 
-    def wait_for_resps(s, req_ids: list[UUID], timeout: Optional[int] = None):
+    def wait_for_resps(s, req_ids: List[UUID], timeout: Optional[int] = None):
         '''Same as wait_for_resp but for multiple requests.'''
 
         resps = asyncio.run(_async_wait_for_resps(s._broker, req_ids, timeout))

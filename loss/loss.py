@@ -1,4 +1,5 @@
 import torch
+from ai.train.log import log
 
 
 class Loss(torch.nn.Module):
@@ -14,18 +15,20 @@ class Loss(torch.nn.Module):
 
 
 class ComboLoss(torch.nn.Module):
-    def __init__(s, *args):
+    def __init__(s, **kwargs):
         super().__init__()
         s._losses = []
-        for a in args:
-            if isinstance(a, tuple) or isinstance(a, list):
-                assert len(a) == 2
-                s._losses.append(a)
+        for k, v in kwargs.items():
+            if isinstance(v, tuple) or isinstance(v, list):
+                assert len(v) == 2
+                s._losses.append((k, v[0], v[1]))
             else:
-                s._losses.append((a, 1.))
+                s._losses.append((k, v, 1.))
 
     def forward(s, *a, **kw):
-        loss = 0.
-        for fn, weight in s._losses:
-            loss += fn(*a, **kw) * weight
-        return loss
+        total_loss = 0.
+        for name, fn, weight in s._losses:
+            loss = fn(*a, **kw) * weight
+            log(f'loss.{name}', loss)
+            total_loss += loss
+        return total_loss

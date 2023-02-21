@@ -16,7 +16,7 @@ class AlphaZeroMLP(m.Model):
         s.value_head = m.fc(layer_dim, 1, actv='tanh')
 
     def forward(s, ob):
-        enc = s.body(ob.float())
+        enc = s.body(ob)
         return {
             'pi': s.policy_head(enc),
             'v': s.value_head(enc).squeeze(1),

@@ -1,8 +1,8 @@
 import torch
 import numpy as np
-from typing import Union, Optional, Callable, Iterable
+from typing import Union, Optional, Callable, Iterable, Dict, List
 
-from ai.data.util import create_data_loader
+from ai.data.loader import create_data_loader
 
 
 ArrayLike = Union[list, tuple, np.ndarray]
@@ -10,10 +10,10 @@ ArrayLike = Union[list, tuple, np.ndarray]
 
 class Dataset:
     def __init__(s,
-        data: ArrayLike | dict[str, ArrayLike],
+        data: Union[ArrayLike, Dict[str, ArrayLike]],
         preprocess: Optional[Callable] = None,
         postprocess: Optional[Callable] = None,
-        default_split: Optional[list[int]] = None,
+        default_split: Optional[List[int]] = None,
     ):
         '''
         data : array-like or dict of array-like

@@ -2,12 +2,12 @@ import torch
 from shutil import rmtree
 from pathlib import Path
 
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.train import Trainer, MultiTrainer
 from ai.train.env import Reconstruct
 from ai.data.img import ImgDataset
 from ai.model.ae import ImgAutoencoder
-from ai.train.log import Tensorboard
+from ai.util.logger import Tensorboard
 from ai.train.hook import Hook
 from ai.train.gan import Gan
 from ai.examples.stylegan2.model import Generator, Discriminator

@@ -2,13 +2,13 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 import numpy as np
-from typing import Optional
+from typing import Optional, List
 
 from ai.model.module import Model
 
 
 class DiffusionModel(Model):
-    def __init__(s, shape: list[int], n_timesteps: int = 50, **kw):
+    def __init__(s, shape: List[int], n_timesteps: int = 50, **kw):
         super().__init__()
         s._shape = shape
         s._n_timesteps = n_timesteps
@@ -38,7 +38,7 @@ class DiffusionModel(Model):
         noise_pred = s(x, t)
         return s.noisify.denoise(x, t[0], noise_pred)
 
-    def denoise_iter(s) -> list[int]:
+    def denoise_iter(s) -> List[int]:
         return list(range(s._n_timesteps))[::-1]
 
     def gen_noise(s, bs: int) -> Tensor:
@@ -47,7 +47,7 @@ class DiffusionModel(Model):
 
 class Noisify(torch.nn.Module):
     def __init__(s,
-        shape: list[int],
+        shape: List[int],
         n_timesteps: int,
         beta_start: float = 0.0001,
         beta_end: float = 0.02,

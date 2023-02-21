@@ -9,32 +9,17 @@ from ai.examples.stylegan2.train import StyleGan
 BASE_CONFIG_PATH = Path(__file__).parent / 'config.yaml'
 
 
-class Trial(ai.lab.Trial):
-    def __init__(s, path, cfg, **kw):
-        super().__init__(path, **kw)
-        s.cfg = cfg
-        (s.path / 'samples').mkdir(exist_ok=True)
-
-    def save_samples(s, step, models, opts):
-        G = models['G'].eval()
-        with ai.no_grad():
-            out = G(torch.randn(64, G.z_dim, device=s.cfg.device))
-        ai.util.img.save_img_grid(
-            s.path / f'samples/{step}.png',
-            out.reshape(8, 8, 3, s.cfg.data.imsize, s.cfg.data.imsize),
-        )
-
-
 def run(output_path, **kw):
     cfg = ai.Config(BASE_CONFIG_PATH, override=kw)
     print(cfg)
 
-    trial = Trial(output_path, cfg, clean=True)
+    trial = ai.Trial(output_path, clean=True, sampler=_save_samples)
     print(f'path: {trial.path}')
+    hook = trial.hook()
 
     ds = ai.data.ImgDataset(cfg.data.dataset, cfg.data.imsize)
 
-    task = _task(ds, trial.log, cfg.device, cfg.task)
+    task = _task(ds, hook.val_log, cfg.device, cfg.task)
 
     models = {
         'G': _G(cfg.data.imsize, cfg.model.G).init().to(cfg.device),
@@ -46,14 +31,6 @@ def run(output_path, **kw):
         'D': ai.opt.build(cfg.opt.D, models['D']),
     }
 
-    hook = trial.hook(snapshot=True)
-    hook.add(trial.save_samples)
-    hook.add(lambda step, models, opts: task(models['G'], step))
-
-    _train(cfg, ds, models, opts, hook)
-
-
-def _train(cfg, ds, models, opts, hook, step=0):
     ai.train.MultiTrainer(
         StyleGan(cfg.train),
         ds.loader(
@@ -62,7 +39,19 @@ def _train(cfg, ds, models, opts, hook, step=0):
             cfg.train.n_data_workers,
             train=True,
         ),
-    ).train(models, opts, hook, step=step)
+    ).train(models, opts, hook, steplimit=6250)
+
+    print(task(models['G'], 6250))
+
+
+def _save_samples(dir, step, models):
+    G = models['G'].eval()
+    with ai.no_grad():
+        out = G(torch.randn(G.imsize, G.z_dim, device=G.get_device()))
+    ai.util.img.save_img_grid(
+        dir / f'{step}.png',
+        out.reshape(8, 8, 3, G.imsize, G.imsize),
+    )
 
 
 def _task(ds, log, device, cfg):
@@ -80,4 +69,4 @@ def _D(imsize, cfg):
 
 
 if __name__ == '__main__':
-    ai.fire(run)
+    ai.run(run)

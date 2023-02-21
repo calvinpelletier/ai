@@ -1,19 +1,135 @@
 import torch
 from time import time
+from typing import Optional, Callable, Union, Dict
 
 from ai.train.schedule import Schedule
 from ai.util import print_header
+from ai.train.opt import OptLike
+from ai.model import Model
 
 
-class Hook:
-    def __init__(s, log=None, save=None, val=None, sample=None, print_=True):
+class HookInterface:
+    '''Training hook inferface.'''
+
+    def setup(s,
+        model: Union[Model, Dict[str, Model]],
+        opt: Union[OptLike, Dict[str, OptLike]],
+        validate: Callable,
+    ):
+        '''Called by the trainer at the start of training.
+
+        ARGS
+            model
+                the model (or dict of models in the case of multi training)
+            opt
+                the optimizer (or dict of opts in the case of multi training)
+            validate
+                a function that can be used for validation (Trainer.validate)
+        '''
+
+        raise NotImplementedError()
+
+    def step(s, step: int) -> bool:
+        '''Called by the trainer before every train step.
+
+        ARGS
+            step
+                the current step count
+        RETURNS
+            whether to early stop or not
+        '''
+
+        raise NotImplementedError()
+
+    def done(s) -> Optional[Union[torch.Tensor, float]]:
+        '''Called by the trainer after training stops.
+
+        RETURNS
+            optionally returns the final validation loss
+        '''
+
+        raise NotImplementedError()
+
+    def train_log(s, k: str, v: Union[int, float, torch.Tensor]):
+        '''Log some intermediate key-value pair from training.
+
+        NOTE: this function is given to the singleton at ai/train/log.py, thus
+        allowing anybody to call it by simply importing it (e.g. the trainer,
+        the training environment, the loss function, etc.)
+
+        ARGS
+            k
+                key
+            v
+                value
+        '''
+
+        raise NotImplementedError()
+
+
+# TODO: rework
+class Hook(HookInterface):
+    '''A simple implementation of the training hook interface.
+
+    Consists of 4 subhooks: log, save, val, and sample.
+
+    Each subhook is enabled by passing a dict to the constructor. For example:
+    ```
+    Hook(log={
+        'fn': ai.util.logger.Tensorboard(log_path),
+        'interval': 1000,
+    })
+    ```
+
+    ARGS
+        log
+            Used for training and validation logging.
+                Training:
+                    key prefix: 'train.' (e.g. 'train.loss')
+                    only every n steps (where n is the log interval)
+                Validation:
+                    key prefix: 'val.'
+            Keys:
+                'fn': fn(key, value)
+                'interval': int
+        save
+            Save model/optimizer snapshots.
+            Keys:
+                'fn': fn(step, model, opt)
+                'interval': int
+        val
+            Model validation.
+            Keys:
+                'data': validation data
+                'interval': int
+                (optional) 'stopper': stopper(val_loss) -> should_stop
+            NOTE: the validation function is received from the trainer when
+            setup is called.
+        sample
+            Save samples from the model for inspection.
+            Keys:
+                'fn': fn(step, model)
+                'interval': int
+        print_
+            whether to print info or not
+    '''
+
+    def __init__(s,
+        log: Optional[dict] = None,
+        save: Optional[dict] = None,
+        val: Optional[dict] = None,
+        sample: Optional[dict] = None,
+        task: Optional[dict] = None,
+        print_: bool = True,
+    ):
         s._log = log
         s._save = save
         s._val = val
         s._sample = sample
+        s._task = task
         s._print = print_
 
-        for subhook in [s._log, s._save, s._val, s._sample]:
+        for subhook in [s._log, s._save, s._val, s._sample, s._task]:
             if subhook is not None:
                 subhook['interval'] = Schedule(subhook['interval'])
 
@@ -30,19 +146,30 @@ class Hook:
         s._last_log_step = None
         s._last_log_time = None
 
-    def setup(s, model, opt, validate):
+    def setup(s,
+        model: Union[Model, Dict[str, Model]],
+        opt: Union[OptLike, Dict[str, OptLike]],
+        validate: Callable,
+    ):
         s._model = model
         s._opt = opt
         if s._val is not None:
             s._val['fn'] = validate
 
-    def step(s, step):
+    def step(s, step: int):
         s._step = step
         s._check_log_step()
         stop = s._run_subhooks()
-        s._model.train()
 
-    def done(s):
+        if isinstance(s._model, dict):
+            for model in s._model.values():
+                model.train()
+        else:
+            s._model.train()
+
+        return stop
+
+    def done(s) -> Optional[Union[torch.Tensor, float]]:
         if s._print:
             print_header(f'DONE (step={s._step})')
         val_loss = s._run_subhooks(True)
@@ -50,12 +177,15 @@ class Hook:
             print_header('')
         return val_loss
 
-    def train_log(s, k, v):
+    def train_log(s, k: str, v: Union[int, float, torch.Tensor]):
         if s._is_log_step:
             s.log('train.'+k, v)
 
     def val_log(s, k, v):
         s.log('val.'+k, v)
+
+    def task_log(s, k, v):
+        s.log('task.'+k, v)
 
     def log(s, k, v):
         if torch.is_tensor(v):
@@ -71,7 +201,12 @@ class Hook:
             s._log['fn'](s._step, k, v)
 
     def _run_subhooks(s, is_done=False):
-        s._model.eval()
+        if isinstance(s._model, dict):
+            for model in s._model.values():
+                model.eval()
+        else:
+            s._model.eval()
+
         stop = False
         val_loss = None
         with torch.no_grad():
@@ -86,6 +221,13 @@ class Hook:
                     val_loss = s._val['fn'](s._model, s._val['data'], s.val_log)
                     if not is_done and s._val['stopper'] is not None:
                         if s._val['stopper'](s._step, val_loss):
+                            stop = True
+
+            if s._task is not None:
+                if is_done or s._task['interval'](s._step):
+                    result = s._task['fn'](s._model, s.task_log)
+                    if not is_done and s._task['stopper'] is not None:
+                        if s._task['stopper'](s._step, result):
                             stop = True
 
         if is_done:
@@ -117,18 +259,17 @@ class Hook:
         return steps_per_sec
 
 
-class NullHook:
-    def setup(s):
+class NullHook(HookInterface):
+    '''Hook that does nothing.'''
+
+    def setup(s, model, opt, validate):
         pass
 
-    def pre_step(s, step, model, opt):
+    def step(s, step):
         pass
-
-    def log(s, k, v):
-        pass
-
-    def post_step(s):
-        return False
 
     def done(s):
+        pass
+
+    def train_log(s, k, v):
         pass

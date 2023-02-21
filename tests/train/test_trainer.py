@@ -1,6 +1,6 @@
 import torch
 
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.train import Trainer
 from ai.train.env import Reconstruct
 from ai.data.img import ImgDataset
@@ -20,7 +20,7 @@ def _test_trainer(env, data, model, device='cuda', bs=8, lr=1e-3):
     model.to(device)
     opt = torch.optim.SGD(model.parameters(), lr=lr)
     data = data.loader(bs, device, train=True)
-    sample = next(data)
+    sample = next(iter(data))
 
     with torch.no_grad():
         loss1 = env(model, sample)

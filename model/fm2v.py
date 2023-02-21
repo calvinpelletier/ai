@@ -1,7 +1,7 @@
 '''Converting features maps to vectors.'''
 
 import torch
-from typing import Optional
+from typing import Optional, Union
 
 from ai.model.linear import fc
 from ai.model.conv2d import conv
@@ -42,7 +42,7 @@ def mbstd(
     mbstd_nc: int = 1,
     actv: str = 'lrelu',
     final_actv: Optional[str] = None,
-    clamp: Optional[int | float] = 256,
+    clamp: Optional[Union[int, float]] = 256,
     scale_w: bool = True,
 ):
     '''Feature map to vector commonly used by discriminators.

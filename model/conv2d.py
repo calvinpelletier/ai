@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from typing import Optional
+from typing import Optional, Union
 
 from ai.model.actv import build_actv
 from ai.model.norm import build_conv2d_norm
@@ -15,7 +15,7 @@ def conv(
     nc1: int,
     nc2: int,
     k: int = 3,
-    stride: int | float = 1,
+    stride: Union[int, float] = 1,
     actv: Optional[str] = None,
     norm: Optional[str] = None,
     gain: Optional[float] = None,
@@ -176,7 +176,7 @@ class Conv2d(nn.Module):
         nc1: int,
         nc2: int,
         k: int = 3,
-        stride: int | float = 1,
+        stride: Union[int, float] = 1,
         bias: bool = True,
         scale_w: bool = False,
         lr_mult: Optional[float] = None,

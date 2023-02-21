@@ -1,7 +1,7 @@
 import torch
 import pytest
 
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.loss import PerceptualLoss, FaceIdentityLoss, L2Loss
 from ai.model.ae import ImgAutoencoder
 

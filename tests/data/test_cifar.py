@@ -1,9 +1,9 @@
 from ai.util.testing import *
-from ai.data import cifar10
+from ai.data import cifar_dataset
 
 
 def test_cifar10_dataset():
-    ds = cifar10()
+    ds = cifar_dataset()
     assert len(ds) == 60000
 
     train_ds, val_ds = ds.split(.9, .1)

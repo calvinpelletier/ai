@@ -2,11 +2,11 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import numpy as np
-from typing import Optional
+from typing import Optional, Union, List
 from einops.layers.torch import Rearrange
 
 
-def resample(stride: int | float):
+def resample(stride: Union[int, float]):
     '''Resize a feature map by scale factor of 1/stride.
 
     INPUT
@@ -104,7 +104,7 @@ def flatten(*a, **kw):
 
 
 class Blur(nn.Module):
-    def __init__(s, up: int, pad: list[int], gain: float):
+    def __init__(s, up: int, pad: List[int], gain: float):
         super().__init__()
         s._up = up
         s._pad = pad

@@ -1,53 +1,62 @@
-import torch
 import random
+import torch
 from collections import defaultdict
+from typing import Iterable, Dict
 
-from ai.data.util import create_data_loader
 
+class DataBuffer:
+    '''Buffer for storing generated data.'''
 
-class ReplayBuffer:
-    def __init__(s,
-        data_gen,
-        device,
-        batch_size,
-        n_data_workers,
-        buf_size,
-        n_replay_times,
-    ):
-        s.generator = iter(create_data_loader(
-            data_gen,
-            batch_size=None,
-            device=device,
-            n_workers=n_data_workers,
-        ))
-
-        s.n_replay_times = n_replay_times
+    def __init__(s, generator: Iterable, batch_size: int, buf_size: int):
+        s._generator = generator
         s.batch_size = batch_size
-        s.buf_size = max(buf_size, batch_size)
+        s.buf_size = buf_size
+
         s._buf = []
 
-    def __iter__(s):
-        return s
-
-    def __next__(s):
+    def get_batch(s) -> Dict[str, torch.Tensor]:
         s._fill_buf()
         return s._create_batch()
 
-    def remove_replay(s, replay):
-        s._buf.remove(replay)
+    def _fill_buf(s):
+        raise NotImplementedError()
+
+    def _create_batch(s):
+        raise NotImplementedError()
+
+
+class ReplayBuffer(DataBuffer):
+    '''Buffer for storing generated game replays.'''
+
+    def __init__(s,
+        generator: Iterable,
+        batch_size: int,
+        buf_size: int,
+        n_replay_times: int,
+    ):
+        super().__init__(generator, batch_size, buf_size)
+        s.n_replay_times = n_replay_times
 
     def _fill_buf(s):
         while len(s._buf) < s.buf_size:
-            s._buf.append(_Replay(s, next(s.generator)))
+            s._buf.append(_Replay(s, next(s._generator)))
 
     def _create_batch(s):
+        if s.buf_size == s.batch_size:
+            replays = s._buf
+        else:
+            replays = random.sample(s._buf, s.batch_size)
+
         batch = defaultdict(list)
-        for replay in random.sample(s._buf, s.batch_size):
+        for replay in replays:
             state = replay.sample_state()
             batch['ob'].append(state.ob)
             batch['pi'].append(state.pi)
             batch['v'].append(state.to_play * replay.outcome)
         return {k: torch.stack(vals).float() for k, vals in batch.items()}
+
+    def remove_replay(s, replay):
+        s._buf.remove(replay)
 
 
 class _Replay:
@@ -79,4 +88,4 @@ class _State:
         s.ply = ply
         s.ob = ob
         s.pi = pi
-        s.to_play = 1 if ply % 2 == 0 else -1 # TODO
+        s.to_play = 1 if ply % 2 == 0 else -1 # TODO: non-2p games

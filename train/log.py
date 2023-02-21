@@ -1,9 +1,14 @@
-from torch.utils.tensorboard import SummaryWriter
+from ai.util import no_op
 
 
-class Tensorboard:
-    def __init__(s, path):
-        s._writer = SummaryWriter(path)
+class TrainLog:
+    def __init__(s):
+        s._fn = no_op
 
-    def __call__(s, step, key, value):
-        s._writer.add_scalar(key, value, step)
+    def setup(s, fn):
+        s._fn = fn
+
+    def __call__(s, *a, **kw):
+        s._fn(*a, **kw)
+
+log = TrainLog()

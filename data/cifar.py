@@ -13,8 +13,8 @@ CLASSES = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse',
     'ship', 'truck')
 
 
-def cifar10(path: PathLike = 'cifar10'):
-    '''CIFAR10 object classification dataset.
+def cifar_dataset(path: PathLike = 'cifar10', n_classes: int = 10):
+    '''CIFAR10/100 object classification dataset.
 
     DATA (n=60_000)
         x : [n, 3, 32, 32] (uint8)
@@ -30,7 +30,12 @@ def cifar10(path: PathLike = 'cifar10'):
                 relative path from AI_DATASETS_PATH environment variable
             NOTE: if the data doesn't exist, it will be downloaded and
             converted.
+        n_classes : int
+            10 or 100
     '''
+
+    assert n_classes in {10, 100}
+    assert n_classes == 10, 'TODO: cifar100'
 
     path = dataset_path(path)
     path.mkdir(parents=True, exist_ok=True)

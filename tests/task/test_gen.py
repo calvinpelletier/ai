@@ -1,6 +1,6 @@
 import pytest
 
-from ai.testing import DEVICE
+from ai.util.testing import *
 from ai.data.img import ImgDataset
 from ai.task import ImgGenTask
 from ai.examples.stylegan2.model import Generator

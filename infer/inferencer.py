@@ -1,4 +1,5 @@
 from redis import Redis
+from typing import Union, List
 
 from ai.util import launch_worker, kill_worker
 from ai.infer.worker import inference_worker
@@ -47,7 +48,7 @@ class Inferencer:
         model: Model,
         device: str = 'cuda',
         batch_size: int = 1,
-        redis_cfg: list | tuple = ('127.0.0.1', 6379, 0),
+        redis_cfg: Union[list, tuple] = ('127.0.0.1', 6379, 0),
         debug: bool = False,
     ):
         '''
@@ -69,8 +70,11 @@ class Inferencer:
         s._broker.flushdb()
 
         # launch worker
-        s._worker = launch_worker(inference_worker,
-            model, device, batch_size, redis_cfg, debug)
+        model_device = model.get_device()
+        model.to('cpu')
+        s._worker = launch_worker(inference_worker, model, device, batch_size,
+            redis_cfg, debug)
+        model.to(model_device)
 
         # create client and test that it's working
         s._client = InferenceClient(redis_cfg)
@@ -92,7 +96,7 @@ class Inferencer:
 
         return s._client.infer(*args, **kwargs)
 
-    def multi_infer(s, reqs: list[tuple]):
+    def multi_infer(s, reqs: List[tuple]):
         '''Bundle multiple inference requests.
 
         reqs : list of tuples

@@ -18,7 +18,8 @@ class Generator(m.Model):
     ):
         super().__init__()
 
-        # expose z_dim so external code can sample the latent space
+        # expose so external code can sample the latent space
+        s.imsize = imsize
         s.z_dim = z_dim
 
         # disentangled latent vector (w) -> img

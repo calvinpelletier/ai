@@ -50,6 +50,7 @@ class ImgDataset(Dataset):
         )
 
         s.metadata_path = dir / 'metadata' # e.g. FID stats
+        s.metadata_path.mkdir(exist_ok=True)
 
 
 def _choose_src_imsize(path, target_imsize, allow_upsampling=False):

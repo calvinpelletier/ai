@@ -1,34 +1,36 @@
 from pathlib import Path
 
 import ai
-import ai.examples.alphazero as a0
+from ai.examples.alphazero import AlphaZeroMLP
 
 
-BASE_CONFIG_PATH = Path(__file__).parent / 'config.yaml'
+class ExampleConfig(ai.Config):
+    def __init__(s, override={}):
+        super().__init__(Path(__file__).parent / 'config.yaml', override)
 
 
-class CLI:
-    def tictactoe(s, output_path, **kw):
-        run(ai.game.TicTacToe(), output_path, kw)
+def run(cfg, game, model):
+    model.init().train().to(cfg.device)
+    player = ai.game.MctsPlayer(cfg.player, game, model)
+    task = ai.task.GameTask(game, player, cfg.task.n_matches)
+    trial = ai.Trial(cfg.outpath, task=task, clean=True)
 
+    ai.Trainer(
+        env=ai.train.RL(cfg.loss.v_weight),
+        data=ai.data.SelfPlay.from_cfg(cfg, game, player),
+    ).train(
+        model,
+        ai.opt.build(cfg.opt, model),
+        trial.hook(),
+        steplimit=cfg.train.steplimit,
+        timelimit=cfg.train.timelimit,
+    )
 
-def run(game, output_path, cfg_override):
-    cfg = ai.Config(BASE_CONFIG_PATH, cfg_override)
-    print(cfg)
-
-    trial = ai.lab.Trial(output_path, clean=True)
-    print(f'path: {trial.path}\n')
-
-    model = a0.AlphaZeroMLP(game).init().to(cfg.train.device)
-    player = a0.AlphaZeroPlayer(cfg.player, game, model)
-
-    task = ai.task.GameTask(game, trial.log)
-    hook = trial.hook(snapshot=False)
-    hook.add(lambda step, _model, _opt: task(player, step))
-
-    trainer = a0.build_trainer(cfg, game, player)
-    trainer.train(model, ai.opt.build(cfg.opt, model), hook)
+    return task()
 
 
 if __name__ == '__main__':
-    ai.fire(CLI)
+    cfg = ExampleConfig()
+    game = ai.game.TicTacToe()
+    model = AlphaZeroMLP(game)
+    run(cfg, game, model)

@@ -1,23 +1,39 @@
-player:
-  n_mcts_sims: 8
-  greedy_ply: 32
+outpath: '/tmp/alphazero'
+device: 'cuda'
+batch_size: 32
+model_update_interval: 1000
 
 opt:
   type: 'adam'
   lr: .001
 
-train:
-  device: 'cuda:0'
-  bs: 16
-  refresh: 100
-  loss:
+loss:
     v_weight: 1.
 
-inference:
-  device: 'cuda:1'
-  bs: 64
-
 data:
-  n_workers: 8
-  buf_size: 32
-  n_replay_times: 2
+    n_workers: null
+    buf_size: null
+    n_replay_times: 4
+
+infer:
+    device: null
+    batch_size: 64
+
+player:
+    mcts:
+        modeled_env: false
+        n_sims: 8
+        intermediate_rewards: false
+        discount: null
+        noise_alpha: .25
+        noise_frac: .25
+        pb_c_base: 19652
+        pb_c_init: 1.25
+    greedy_ply: null
+
+train:
+    steplimit: null
+    timelimit: null
+
+task:
+    n_matches: 256

@@ -1,55 +1,57 @@
-from ai.game.player import RandomPlayer, PLAYER1, PLAYER2
+from copy import deepcopy
+
+from ai.game.player import RandomPlayer
 from ai.util import no_op
 
 
 class GameTask:
-    def __init__(s, game, log=no_op, n_matches=32):
+    def __init__(s, game, player, n_matches=256):
         assert game.n_players == 2, 'TODO: non-2-player games'
-        s._game = game
-        s._log = log
-        s._n_matches = 32
+        s._game = deepcopy(game)
+        s._player = player
+        s._n_matches = n_matches
 
-    def __call__(s, player, step=None):
-        opp = RandomPlayer()
+    def __call__(s, _model=None, log=no_op):
+        win_rate_vs_random, _, _ = s._run('vs_random', RandomPlayer(), log)
+        _, _, draw_rate_vs_self = s._run('vs_self', s._player, log)
+        return win_rate_vs_random, draw_rate_vs_self
 
-        p1_stats = _Stats(PLAYER1)
-        p2_stats = _Stats(PLAYER2)
+    def _run(s, prefix, opp, log):
+        p1_stats = _Stats(s._game.PLAYER1)
+        p2_stats = _Stats(s._game.PLAYER2)
         for i in range(s._n_matches):
             if i < s._n_matches // 2:
-                p1, p2 = player, opp
+                p1, p2 = s._player, opp
                 stats = p1_stats
             else:
-                p1, p2 = opp, player
+                p1, p2 = opp, s._player
                 stats = p2_stats
-
-            outcome = _play(s._game, p1, p2)
-            stats.update(outcome)
+            stats.update(s._play(p1, p2))
 
         win_rate = (p1_stats.wins + p2_stats.wins) / s._n_matches
         loss_rate = (p1_stats.losses + p2_stats.losses) / s._n_matches
         draw_rate = (p1_stats.draws + p2_stats.draws) / s._n_matches
-        s._log(step, 'task.win_rate', win_rate)
-        s._log(step, 'task.loss_rate', loss_rate)
-        s._log(step, 'task.draw_rate', draw_rate)
+        log(f'{prefix}.win_rate', win_rate)
+        log(f'{prefix}.loss_rate', loss_rate)
+        log(f'{prefix}.draw_rate', draw_rate)
 
-        s._log(step, 'task.p1.win_rate', p1_stats.wins / p1_stats.total)
-        s._log(step, 'task.p1.loss_rate', p1_stats.losses / p1_stats.total)
-        s._log(step, 'task.p1.draw_rate', p1_stats.draws / p1_stats.total)
+        log(f'{prefix}.p1.win_rate', p1_stats.wins / p1_stats.total)
+        log(f'{prefix}.p1.loss_rate', p1_stats.losses / p1_stats.total)
+        log(f'{prefix}.p1.draw_rate', p1_stats.draws / p1_stats.total)
 
-        s._log(step, 'task.p2.win_rate', p2_stats.wins / p2_stats.total)
-        s._log(step, 'task.p2.loss_rate', p2_stats.losses / p2_stats.total)
-        s._log(step, 'task.p2.draw_rate', p2_stats.draws / p2_stats.total)
+        log(f'{prefix}.p2.win_rate', p2_stats.wins / p2_stats.total)
+        log(f'{prefix}.p2.loss_rate', p2_stats.losses / p2_stats.total)
+        log(f'{prefix}.p2.draw_rate', p2_stats.draws / p2_stats.total)
 
-        return win_rate
+        return win_rate, loss_rate, draw_rate
 
-
-def _play(game, p1, p2):
-    game.reset()
-    while game.outcome is None:
-        player = p1 if game.to_play == 1 else p2
-        action, _ = player.act(game)
-        game.step(action)
-    return game.outcome
+    def _play(s, p1, p2):
+        s._game.reset()
+        while s._game.outcome is None:
+            player = p1 if s._game.to_play == 1 else p2
+            action = player.act(s._game, greedy=True)
+            s._game.step(action)
+        return s._game.outcome
 
 
 class _Stats:

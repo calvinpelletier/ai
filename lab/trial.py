@@ -1,7 +1,7 @@
 import torch
 from functools import partial
 
-from ai.train.log import Tensorboard
+from ai.util.logger import Tensorboard
 from ai.train.hook import Hook
 from ai.lab.base import LabEntity
 from ai.train.schedule import Logarithmic
@@ -24,6 +24,10 @@ class Trial(LabEntity):
 
         sampler=None,
         sample_interval=Logarithmic(128, 65536),
+
+        task=None,
+        task_interval=Logarithmic(1024, 65536),
+        task_stopper=None,
     ):
         super().__init__(path, clean)
 
@@ -50,6 +54,12 @@ class Trial(LabEntity):
             s._hook_kwargs['sample'] = {
                 'fn': partial(sampler, samples_path),
                 'interval': sample_interval,
+            }
+        if task is not None:
+            s._hook_kwargs['task'] = {
+                'fn': task,
+                'interval': task_interval,
+                'stopper': task_stopper,
             }
 
         # if part of an experiment

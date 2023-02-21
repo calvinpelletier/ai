@@ -2,7 +2,7 @@ device: 'cuda'
 
 data:
   dataset: 'ffhq'
-  imsize: 256
+  imsize: 64
 
 model:
   G:
@@ -25,7 +25,7 @@ opt:
     lr: 0.0025
 
 train:
-  bs: 16
+  bs: 32
   n_data_workers: 2
   style_mix_prob: .9
   G:
