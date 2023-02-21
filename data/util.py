@@ -1,7 +1,5 @@
 import torch
 
-from ai.data.loader import DataLoader
-
 
 def transfer_data(data, device):
     if isinstance(data, torch.Tensor):

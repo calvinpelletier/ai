@@ -7,10 +7,6 @@ from typing import Union
 # TODO: comments, docstrings, type hints
 
 
-# TODO: complete refactor (maybe move gradient clipping to trainer?)
-# TODO: comments, docstrings, type hints
-
-
 class Opt:
     def __init__(s, opt_cls, params, grad_clip=False, **kw):
         s._opt = opt_cls(params, **kw)
