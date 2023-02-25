@@ -11,10 +11,15 @@ def vit_cifar10(
     **model_kw,
 ):
     val_ds, train_ds = ai.data.cifar10().split(.1, .9)
-    train_loader = train_ds.loader(batch_size, device, train=True)
-    val_loader = val_ds.loader(256, device, train=False)
+    train_iter = train_ds.iterator(batch_size, device, train=True)
+    val_iter = val_ds.iterator(256, device, train=False)
 
-    trial = ai.Trial(output_path, clean=True, val_data=val_loader)
+    trial = ai.Trial(
+        output_path,
+        val_data=val_iter,
+        task=ai.task.Classify(val_iter),
+        clean=True,
+    )
 
     model = VisionTransformer(
         imsize=32,
@@ -23,16 +28,15 @@ def vit_cifar10(
         dim=64,
         n_blocks=2,
         n_heads=2,
-        head_dim=64,
         mlp_dim=64,
     ).init().to(device)
-    opt = ai.opt.adam(model, lr=lr)
 
-    trainer = ai.Trainer(ai.train.Classify(), train_loader)
-    trainer.train(model, opt, trial.hook(), steplimit=steps)
-
-    task = ai.task.Classify(val_loader) # TODO: task hook
-    print(task(model))
+    ai.Trainer(ai.train.Classify(), train_iter).train(
+        model,
+        ai.opt.AdamW(model, lr=lr),
+        trial.hook(),
+        steplimit=steps,
+    )
 
 
 if __name__ == '__main__':

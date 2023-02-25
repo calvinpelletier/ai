@@ -6,23 +6,23 @@ from typing import Optional, Union, List
 from einops.layers.torch import Rearrange
 
 
-def resample(stride: Union[int, float]):
-    '''Resize a feature map by scale factor of 1/stride.
+def resample(scale: Union[int, float]):
+    '''Resize a feature map by scale factor.
 
     INPUT
         tensor[b, c, h, w]
     OUTPUT
-        tensor[b, c, h / <stride>, w / <stride>]
+        tensor[b, c, h * <scale>, w * <scale>]
 
     ARGS
-        stride : int or float
-            inverse of the scale factor
+        scale
+            The scale factor.
     '''
 
-    if stride > 1:
-        return nn.AvgPool2d(stride)
-    elif stride < 1:
-        return nn.Upsample(scale_factor=int(1 / stride), mode='nearest')
+    if scale < 1:
+        return nn.AvgPool2d(int(1 / scale))
+    elif scale > 1:
+        return nn.Upsample(scale_factor=scale, mode='nearest')
     return nn.Identity()
 
 

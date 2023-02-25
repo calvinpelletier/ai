@@ -35,7 +35,7 @@ def _test_tensorboard_hook(path, train_fn):
 
 def _train(hook):
     env = Reconstruct()
-    data = ImgDataset('ffhq', 64).loader(8, DEVICE, train=True)
+    data = ImgDataset('ffhq', 64).iterator(8, DEVICE, train=True)
 
     model = ImgAutoencoder(64, 4).init().to(DEVICE)
     opt = torch.optim.SGD(model.parameters(), lr=1e-3)
@@ -45,7 +45,7 @@ def _train(hook):
 
 def _multitrain(hook):
     env = StyleGan(StyleGan.TEST)
-    data = ImgDataset('ffhq', 64).loader(8, DEVICE, train=True)
+    data = ImgDataset('ffhq', 64).iterator(8, DEVICE, train=True)
 
     models = {
         'G': Generator(64).init(),

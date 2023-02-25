@@ -16,9 +16,9 @@ val_ds, train_ds = ai.data.ImgDataset('ffhq', imsize).split(.01, .99)
 samples = val_ds.sample(8, device)
 
 
-def build_data_loaders():
-    train_data = train_ds.loader(batch_size, device, train=True)
-    val_data = val_ds.loader(val_batch_size, device, train=False)
+def build_data_iterators():
+    train_data = train_ds.iterator(batch_size, device, train=True)
+    val_data = val_ds.iterator(val_batch_size, device, train=False)
     return train_data, val_data
 
 
@@ -60,7 +60,7 @@ class CLI:
         study.clean()
 
     def train(s, loss='pixel', bottleneck=4, lr=4e-4, steps=None):
-        train_data, val_data = build_data_loaders()
+        train_data, val_data = build_data_iterators()
 
         trial = study.trial(
             f'{loss}/{bottleneck}/main',
@@ -80,7 +80,7 @@ class CLI:
         run(trial, train_data, val_data, loss_fn, model, opt, steps)
 
     def hypertrain(s, n=8, loss='pixel', bottleneck=4, steps=4000):
-        train_data, val_data = build_data_loaders()
+        train_data, val_data = build_data_iterators()
 
         exp = study.experiment(f'{loss}/{bottleneck}/hps', val_data=val_data)
 

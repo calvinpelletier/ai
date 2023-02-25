@@ -13,15 +13,15 @@ def mnist(
     trial = ai.Trial(output_path, clean=True)
 
     model = Model(**model_kw).init().to(device)
-    opt = ai.opt.adam(model, lr=lr)
+    opt = ai.opt.AdamW(model, lr=lr)
 
     val_ds, train_ds = ai.data.mnist_dataset().split(.1, .9)
-    train_loader = train_ds.loader(batch_size, device, train=True)
-    val_loader = val_ds.loader(256, device, train=False)
+    train_iter = train_ds.iterator(batch_size, device, train=True)
+    val_iter = val_ds.iterator(256, device, train=False)
 
-    task = ai.task.Classify(val_loader)
+    task = ai.task.Classify(val_iter)
 
-    trainer = ai.Trainer(ai.train.Classify(), train_loader)
+    trainer = ai.Trainer(ai.train.Classify(), train_iter)
     trainer.train(model, opt, trial.hook(True), steplimit=steps)
 
     print(task(model))

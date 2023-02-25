@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torchvision
 from lpips import LPIPS
 
-from ai.loss.loss import Loss
+from ai.train.loss.loss import Loss
 from ai.util.img import resize
 
 

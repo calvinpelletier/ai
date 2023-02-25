@@ -4,13 +4,12 @@ from functools import partial
 from ai.util.logger import Tensorboard
 from ai.train.hook import Hook
 from ai.lab.base import LabEntity
-from ai.train.schedule import Logarithmic
+from ai.util.schedule import Logarithmic
 
 
 class Trial(LabEntity):
     def __init__(s,
         path,
-        clean=False,
 
         logger=Tensorboard,
         log_interval=Logarithmic(1, 1024),
@@ -29,7 +28,7 @@ class Trial(LabEntity):
         task_interval=Logarithmic(1024, 65536),
         task_stopper=None,
     ):
-        super().__init__(path, clean)
+        super().__init__(path)
 
         s._hook_kwargs = {}
         if logger is not None:

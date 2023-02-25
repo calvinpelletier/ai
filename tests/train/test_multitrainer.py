@@ -33,7 +33,7 @@ def test_stylegan():
 
 
 def _test_multitrainer(env, data, models, device='cuda', bs=8, lr=1e-3):
-    data = data.loader(bs, device, train=True)
+    data = data.iterator(bs, device, train=True)
 
     opts = {}
     for k, model in models.items():

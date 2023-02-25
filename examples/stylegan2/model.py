@@ -17,8 +17,6 @@ class Generator(m.Model):
         clamp=256,
     ):
         super().__init__()
-
-        # expose so external code can sample the latent space
         s.imsize = imsize
         s.z_dim = z_dim
 
@@ -50,6 +48,7 @@ class SynthesisNetwork(m.Module):
         for i, block in enumerate(s.blocks):
             x, img = block(x, img, ws.narrow(1, 2*i, 2))
         return img
+
 
 class SynthesisBlock(m.Module):
     def __init__(s, nc1, nc2, z_dim, clamp):
@@ -113,6 +112,7 @@ class Discriminator(m.Model):
         final = m.fm2v.mbstd(smallest, main.nc_out, clamp=clamp)
 
         super().__init__(m.seq(initial, main, final))
+
 
 def discrim_block(nc1, nc2, clamp=256):
     gain = sqrt(0.5)

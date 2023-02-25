@@ -1,23 +1,17 @@
 import torch
 import torch.nn.functional as F
-from typing import Optional, Callable
+from typing import Optional, Callable, Dict
 
-from ai.train.env import MultiEnv
-from ai.train.util import on_interval
-from ai.train.log import log
+from ai.train.env.base import MultiEnv
+from ai.util import on_interval
+from ai.train.logger import log
+from ai.model import Model
 
 
 class Gan(MultiEnv):
-    '''Training environment for Generative Adversarial Networks.'''
+    '''Training environment for Generative Adversarial Networks.
 
-    def __init__(s,
-        aug: Optional[Callable] = None,
-        g_reg_interval: Optional[int] = None,
-        g_reg_weight: float = 1.,
-        d_reg_interval: Optional[int] = 16,
-        d_reg_weight: float = 1.,
-    ):
-        '''
+    ARGS
         aug : callable or null
             optional augmentation before calling the discriminator
             TODO: adaptive discriminator augmentation
@@ -32,15 +26,26 @@ class Gan(MultiEnv):
             default is gradient penalty (https://arxiv.org/pdf/1704.00028.pdf)
         d_reg_weight : float
             weight of the discriminator's regularization loss
-        '''
+    '''
 
+    def __init__(s,
+        aug: Optional[Callable] = None,
+        g_reg_interval: Optional[int] = None,
+        g_reg_weight: float = 1.,
+        d_reg_interval: Optional[int] = 16,
+        d_reg_weight: float = 1.,
+    ):
         s._aug = aug
         s._g_reg_interval, s._g_reg_weight = g_reg_interval, g_reg_weight
         s._d_reg_interval, s._d_reg_weight = d_reg_interval, d_reg_weight
 
     # generator step
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    def G(s, models, batch, step=0):
+    def G(s,
+        models: Dict[str, Model],
+        batch: torch.Tensor,
+        step: int = 0,
+    ) -> torch.Tensor:
         # main
         loss = s._g_main(models, batch)
         log('G.loss.main', loss)
@@ -49,7 +54,7 @@ class Gan(MultiEnv):
         if on_interval(step, s._g_reg_interval):
             reg_loss = s._g_reg(models, batch)
             log('G.loss.reg', reg_loss)
-            loss += reg_loss * s._g_reg_weight
+            loss += reg_loss * s._g_reg_weight * s._g_reg_interval
 
         return loss
 
@@ -65,7 +70,11 @@ class Gan(MultiEnv):
 
     # discriminator step
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    def D(s, models, batch, step=0):
+    def D(s,
+        models: Dict[str, Model],
+        batch: torch.Tensor,
+        step: int = 0,
+    ) -> torch.Tensor:
         # main
         loss = s._d_main(models, batch)
         log('D.loss.main', loss)
@@ -74,7 +83,7 @@ class Gan(MultiEnv):
         if on_interval(step, s._d_reg_interval):
             reg_loss = s._d_reg(models, batch)
             log('D.loss.reg', reg_loss)
-            loss += reg_loss * s._d_reg_weight
+            loss += reg_loss * s._d_reg_weight * s._d_reg_interval
 
         return loss
 

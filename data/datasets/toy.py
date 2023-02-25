@@ -6,7 +6,7 @@ import numpy as np
 from ai.data.dataset import Dataset
 
 
-def moons_dataset(
+def moons(
     n: int = 128,
     include_labels: bool = True,
     mult: float = 1.,

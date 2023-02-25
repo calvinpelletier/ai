@@ -1,6 +1,6 @@
 from ai.model import fm2v, norm
 from ai.model import functional as f
-from ai.model.attention import self_attn, transformer_enc, transformer_enc_blk
+from ai.model.attention import attn, sa, tx_enc, tx_enc_blk
 from ai.model.conv2d import conv
 from ai.model.diffusion import DiffusionModel
 from ai.model.etc import (

@@ -4,12 +4,11 @@ from ai.path import lab_path
 
 
 class LabEntity:
-    def __init__(s, path, clean):
+    def __init__(s, path):
         s.path = lab_path(path)
-        if clean and s.path.exists():
-            rmtree(s.path)
         s.path.mkdir(parents=True, exist_ok=True)
 
     def clean(s):
         rmtree(s.path)
         s.path.mkdir()
+        return s

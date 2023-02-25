@@ -50,7 +50,7 @@ def resblk(
 
     # shortcut
     if nc1 != nc2 or stride != 1:
-        shortcut = seq(resample(stride), conv(nc1, nc2, k=1))
+        shortcut = conv(nc1, nc2, k=1, stride=stride)
     else:
         shortcut = None # simple addition residual
 

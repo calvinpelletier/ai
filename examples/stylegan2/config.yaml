@@ -2,7 +2,7 @@ device: 'cuda'
 
 data:
   dataset: 'ffhq'
-  imsize: 64
+  imsize: 128
 
 model:
   G:
@@ -11,7 +11,7 @@ model:
       nc_min: 32
       nc_max: 512
     f:
-      n_layers: 8
+      n_layers: 4
   D:
     nc_min: 32
     nc_max: 512
@@ -20,24 +20,29 @@ opt:
   G:
     type: 'adam'
     lr: 0.0025
+    betas: [0, 0.99]
   D:
     type: 'adam'
     lr: 0.0025
+    betas: [0, 0.99]
 
 train:
   bs: 32
   n_data_workers: 2
   style_mix_prob: .9
+  # style_mix_prob: 0
   G:
     reg:
       interval: 4
+      # interval: null
       weight: 2.
       batch_shrink: 2
       decay: 0.01
   D:
     reg:
       interval: 16
-      weight: 1.
+      # interval: null
+      weight: .1
 
 task:
   bs: 64

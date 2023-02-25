@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from einops import repeat
+from typing import Optional
 
 import ai.model as m
 from ai.util import assert_equal
@@ -14,8 +15,8 @@ class VisionTransformer(m.Model):
         dim: int,
         n_blocks: int,
         n_heads: int,
-        head_dim: int,
         mlp_dim: int,
+        head_dim: Optional[int] = None,
         nc_in: int = 3,
         pool: str = 'cls',
         dropout: float = 0.,
@@ -41,8 +42,8 @@ class VisionTransformer(m.Model):
         s._pos_embedding = nn.Parameter(torch.randn(1, n_patches + 1, dim))
         s._cls_token = nn.Parameter(torch.randn(1, 1, dim))
 
-        s._transformer = m.transformer_enc(n_blocks, dim, n_heads, head_dim,
-            mlp_dim, dropout)
+        s._transformer = m.tx_enc(n_blocks, dim, n_heads, mlp_dim,
+            head_dim, dropout)
 
         s._mlp_head = m.seq(
             m.layer_norm(dim),

@@ -1,4 +1,6 @@
 import optuna
+from optuna.pruners import SuccessiveHalvingPruner
+from optuna.samplers import TPESampler
 from optuna.trial import TrialState
 from functools import partial
 import matplotlib.pyplot as plt
@@ -9,9 +11,15 @@ from ai.util import print_header
 
 
 class Experiment(LabEntity):
-    def __init__(s, path, direction='min', clean=False, **trial_kw):
-        super().__init__(path, clean)
+    def __init__(s, path, direction='min', prune=True, **trial_kw):
+        super().__init__(path)
         assert direction in ['min', 'max']
+        if prune:
+            assert (
+                'val_data' in trial_kw or 'task' in trial_kw,
+                'Need val_data or task in trial kwargs in prune==True',
+            )
+            assert 'task' not in trial_kw, 'TODO: task-based early stopping'
         s._trial_kw = trial_kw
 
         optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -20,16 +28,17 @@ class Experiment(LabEntity):
             storage=f'sqlite:///{s.path}/experiment.db',
             load_if_exists=True,
             direction='minimize' if direction == 'min' else 'maximize',
-            sampler=optuna.samplers.TPESampler(),
-            pruner=optuna.pruners.SuccessiveHalvingPruner(),
+            sampler=TPESampler(),
+            pruner=SuccessiveHalvingPruner() if prune else None,
         )
+
+    @property
+    def best_hparams(s):
+        return s._exp.best_params
 
     def run(s, n, fn):
         print(f'RUNNING EXPERIMENT {s.path} (n={n})\n')
         s._exp.optimize(partial(s._run, fn), n_trials=n)
-
-    def best_hparams(s):
-        return s._exp.best_params
 
     def show_plot(s, hparam, show_pruned=False, only_best=None):
         trials = []

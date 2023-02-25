@@ -32,8 +32,8 @@ def run(output_path, **kw):
     }
 
     ai.train.MultiTrainer(
-        StyleGan(cfg.train),
-        ds.loader(
+        StyleGan.from_cfg(cfg.train),
+        ds.iterator(
             cfg.train.bs,
             cfg.device,
             cfg.train.n_data_workers,

@@ -4,8 +4,8 @@ from ai.lab.exp import Experiment
 
 
 class Study(LabEntity):
-    def __init__(s, path, clean=False):
-        super().__init__(path, clean)
+    def __init__(s, path):
+        super().__init__(path)
 
     def trial(s, name, *a, **kw):
         return Trial(s.path / name, *a, **kw)

@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from typing import Union, Optional, Callable, Iterable, Dict, List
 
-from ai.data.loader import create_data_loader
+from ai.data.iterator import create_data_iterator
 
 
 ArrayLike = Union[list, tuple, np.ndarray]
@@ -111,16 +111,16 @@ class Dataset:
             tensor[n, ...] or list/dict of tensor[n, ...]
         '''
 
-        return next(iter(s.loader(n, device)))
+        return next(iter(s.iterator(n, device)))
 
-    def loader(s,
+    def iterator(s,
         batch_size: int,
         device: torch.device = 'cuda',
         n_workers: int = 1,
         train: bool = False,
         drop_last: bool = True,
     ) -> Iterable:
-        '''Create a data loader for this dataset.
+        '''Create a data iterator for this dataset.
 
         ARGS
             batch_size : int
@@ -133,7 +133,7 @@ class Dataset:
                 drop last batch if incomplete
         '''
 
-        return create_data_loader(
+        return create_data_iterator(
             _Dataset(s._data, s._preprocess),
             batch_size=batch_size,
             device=device,

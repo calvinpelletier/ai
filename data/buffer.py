@@ -26,7 +26,7 @@ class DataBuffer:
 
 
 class ReplayBuffer(DataBuffer):
-    '''Buffer for storing generated game replays.'''
+    '''Buffer for storing game replays.'''
 
     def __init__(s,
         generator: Iterable,

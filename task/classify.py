@@ -1,22 +1,16 @@
 import torch
+from typing import Callable, Iterable
 
-
-class Task:
-    def __call__(s, model):
-        model.eval()
-        with torch.no_grad():
-            evaluation = s.evaluate(model)
-        return evaluation
-
-    def evaluate(s, model):
-        raise NotImplementedError()
+from ai.task.base import Task
+from ai.util import no_op
+from ai.model import Model
 
 
 class Classify(Task):
-    def __init__(s, data):
+    def __init__(s, data: Iterable):
         s._data = data
 
-    def evaluate(s, model):
+    def __call__(s, model: Model, log: Callable = no_op):
         correct = 0
         total = 0
         for batch in s._data:
@@ -26,4 +20,6 @@ class Classify(Task):
             correct += pred.eq(y.view_as(pred)).sum().item()
             total += x.shape[0]
         assert total > 0, 'empty data in classify task'
-        return 100. * correct / total
+        acc = 100. * correct / total
+        log('accuracy', acc)
+        return acc

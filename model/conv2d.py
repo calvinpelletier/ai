@@ -91,7 +91,7 @@ def conv(
     seq = []
 
     if stride < 1 or (k == 1 and stride != 1):
-        seq.append(resample(stride))
+        seq.append(resample(1 / stride))
         stride = 1
 
     if scale_w or lr_mult is not None:

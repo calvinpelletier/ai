@@ -1,5 +1,5 @@
 import torch
-from ai.train.log import log
+from ai.train.logger import log
 
 
 class Loss(torch.nn.Module):
