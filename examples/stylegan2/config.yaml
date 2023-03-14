@@ -11,7 +11,7 @@ model:
       nc_min: 32
       nc_max: 512
     f:
-      n_layers: 8
+      n_layers: 4
   D:
     nc_min: 32
     nc_max: 512
@@ -20,9 +20,11 @@ opt:
   G:
     type: 'adam'
     lr: 0.0025
+    betas: [0, 0.99]
   D:
     type: 'adam'
     lr: 0.0025
+    betas: [0, 0.99]
 
 train:
   bs: 32
@@ -37,7 +39,7 @@ train:
   D:
     reg:
       interval: 16
-      weight: 1.
+      weight: .1
 
 task:
   bs: 64

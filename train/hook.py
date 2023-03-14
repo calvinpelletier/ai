@@ -1,10 +1,10 @@
 import torch
+from torch.optim import Optimizer
 from time import time
 from typing import Optional, Callable, Union, Dict
 
-from ai.train.schedule import Schedule
+from ai.util.schedule import Schedule
 from ai.util import print_header
-from ai.train.opt import OptLike
 from ai.model import Model
 
 
@@ -13,7 +13,7 @@ class HookInterface:
 
     def setup(s,
         model: Union[Model, Dict[str, Model]],
-        opt: Union[OptLike, Dict[str, OptLike]],
+        opt: Union[Optimizer, Dict[str, Optimizer]],
         validate: Callable,
     ):
         '''Called by the trainer at the start of training.
@@ -148,7 +148,7 @@ class Hook(HookInterface):
 
     def setup(s,
         model: Union[Model, Dict[str, Model]],
-        opt: Union[OptLike, Dict[str, OptLike]],
+        opt: Union[Optimizer, Dict[str, Optimizer]],
         validate: Callable,
     ):
         s._model = model

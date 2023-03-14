@@ -3,7 +3,6 @@ from ai import (
     examples,
     game,
     lab,
-    loss,
     model,
     path,
     task,
@@ -14,4 +13,5 @@ from ai import (
 from ai.alias import run, no_grad, randn
 from ai.config import Config
 from ai.lab import Study, Trial, Experiment
-from ai.train import Trainer, opt
+from ai.model import Model
+from ai.train import Trainer, opt, loss

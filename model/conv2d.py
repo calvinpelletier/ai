@@ -8,7 +8,7 @@ from typing import Optional, Union
 
 from ai.model.actv import build_actv
 from ai.model.norm import build_conv2d_norm
-from ai.model.etc import resample, Clamp
+from ai.model.etc import resample, Clamp, Blur, Gain
 
 
 def conv(
@@ -21,6 +21,7 @@ def conv(
     gain: Optional[float] = None,
     clamp: Optional[float] = None,
     noise: bool = False,
+    blur: bool = False,
     bias: bool = True,
     padtype: str = 'zeros',
     scale_w: bool = False,
@@ -34,6 +35,7 @@ def conv(
         tensor[b, <nc2>, h / <stride>, w / <stride>]
 
     operations in order:
+        blur
         resample
             if stride < 1 or (k == 1 and stride != 1)
             NOTE: if resampling, stride for conv will be 1
@@ -73,6 +75,8 @@ def conv(
             add noise [b, 1, h, w] multiplied by a learnable magnitude
             NOTE: this is not for preventing overfitting
             TODO: add option for a fixed magnitude
+        blur : bool
+            blur (similar to upfirn2d used by stylegan2) before all other ops
         bias : bool
             enable bias in conv (default true)
             NOTE: if norm has a learnable bias, the conv bias is disabled
@@ -90,8 +94,11 @@ def conv(
 
     seq = []
 
+    if blur:
+        seq.append(Blur())
+
     if stride < 1 or (k == 1 and stride != 1):
-        seq.append(resample(stride))
+        seq.append(resample(1 / stride))
         stride = 1
 
     if scale_w or lr_mult is not None:
@@ -99,6 +106,7 @@ def conv(
             nc1, nc2,
             k=k,
             stride=stride,
+            padding=0 if blur else (k - 1) // 2,
             bias=bias and not norm_has_bias,
             scale_w=scale_w,
             lr_mult=lr_mult,
@@ -108,7 +116,7 @@ def conv(
             nc1, nc2,
             kernel_size=k,
             stride=stride,
-            padding=(k - 1) // 2,
+            padding=0 if blur else (k - 1) // 2,
             padding_mode=padtype,
             bias=bias and not norm_has_bias,
         ))
@@ -177,6 +185,7 @@ class Conv2d(nn.Module):
         nc2: int,
         k: int = 3,
         stride: Union[int, float] = 1,
+        padding: int = 0,
         bias: bool = True,
         scale_w: bool = False,
         lr_mult: Optional[float] = None,
@@ -194,7 +203,7 @@ class Conv2d(nn.Module):
         s._bias_mult = lr_mult
 
         s._stride = stride
-        s._pad = (k - 1) // 2
+        s._padding = padding
 
     def init_params(s):
         nn.init.normal_(s._weight)
@@ -209,14 +218,5 @@ class Conv2d(nn.Module):
             w,
             bias=b,
             stride=s._stride,
-            padding=s._pad,
+            padding=s._padding,
         )
-
-
-class Gain(nn.Module):
-    def __init__(s, val):
-        super().__init__()
-        s._val = val
-
-    def forward(s, x):
-        return x * s._val

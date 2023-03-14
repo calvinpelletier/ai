@@ -21,3 +21,7 @@ def softmax(x, t=1.):
 
 def softmax_sample_idx(x, t=1.):
     return np.random.choice(np.arange(len(x)), p=softmax(x, t))
+
+
+def on_interval(i: int, interval: int) -> bool:
+    return interval is not None and i % interval == 0

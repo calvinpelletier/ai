@@ -4,8 +4,9 @@ batch_size: 32
 model_update_interval: 1000
 
 opt:
-  type: 'adam'
+  type: 'adamw'
   lr: .001
+  grad_clip: true
 
 loss:
     v_weight: 1.

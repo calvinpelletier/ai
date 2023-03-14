@@ -4,7 +4,7 @@ from typing import Optional, Callable, Union
 from ai.data.util import data_iter, inf_data_iter
 
 
-def create_data_loader(
+def create_data_iterator(
     data: torch.utils.data.Dataset,
     batch_size: int,
     device: torch.device = 'cuda',
@@ -52,10 +52,10 @@ def create_data_loader(
         raise ValueError(f'unexpected device: {device}')
 
     loader = torch.utils.data.DataLoader(data, **loader_kwargs)
-    return DataLoader(loader, device, infinite, postprocess)
+    return DataIterator(loader, device, infinite, postprocess)
 
 
-class DataLoader:
+class DataIterator:
     def __init__(s,
         loader: torch.utils.data.DataLoader,
         device: str,

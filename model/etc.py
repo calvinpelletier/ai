@@ -6,23 +6,23 @@ from typing import Optional, Union, List
 from einops.layers.torch import Rearrange
 
 
-def resample(stride: Union[int, float]):
-    '''Resize a feature map by scale factor of 1/stride.
+def resample(scale: Union[int, float]):
+    '''Resize a feature map by scale factor.
 
     INPUT
         tensor[b, c, h, w]
     OUTPUT
-        tensor[b, c, h / <stride>, w / <stride>]
+        tensor[b, c, h * <scale>, w * <scale>]
 
     ARGS
-        stride : int or float
-            inverse of the scale factor
+        scale
+            The scale factor.
     '''
 
-    if stride > 1:
-        return nn.AvgPool2d(stride)
-    elif stride < 1:
-        return nn.Upsample(scale_factor=int(1 / stride), mode='nearest')
+    if scale < 1:
+        return nn.AvgPool2d(int(1 / scale))
+    elif scale > 1:
+        return nn.Upsample(scale_factor=scale, mode='nearest')
     return nn.Identity()
 
 
@@ -104,17 +104,15 @@ def flatten(*a, **kw):
 
 
 class Blur(nn.Module):
-    def __init__(s, up: int, pad: List[int], gain: float):
+    def __init__(s, pad: List[int] = [2,2,2,2], gain: float = 1., up: int = 1):
         super().__init__()
-        s._up = up
         s._pad = pad
         s._gain = gain
+        s._up = up
 
         f = torch.as_tensor([1, 3, 3, 1], dtype=torch.float32)
         f = f.ger(f)
-        assert f.ndim == 2
-        f /= f.sum()
-        s.register_buffer('_filter', f)
+        s.register_buffer('_filter', f / f.sum())
 
     def forward(s, x):
         bs, nc, h, w = x.shape
@@ -135,5 +133,17 @@ def blur(*a, **kw):
     return Blur(*a, **kw)
 
 
-# aliases
+class Gain(nn.Module):
+    def __init__(s, val):
+        super().__init__()
+        s._val = val
+
+    def forward(s, x):
+        return x * s._val
+
+def gain(*a, **kw):
+    return Gain(*a, **kw)
+
+
+# alias
 rearrange = Rearrange

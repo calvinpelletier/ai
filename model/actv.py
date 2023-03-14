@@ -2,11 +2,12 @@
 
 from torch import nn
 from typing import Optional
+from functools import partial
 
 
 ACTIVATIONS = {
     'relu': nn.ReLU,
-    'lrelu': nn.LeakyReLU,
+    'lrelu': partial(nn.LeakyReLU, 0.2),
     'prelu': nn.PReLU,
     'sigmoid': nn.Sigmoid,
     'mish': nn.Mish,

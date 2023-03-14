@@ -6,32 +6,31 @@ from ai import Config
 
 
 # TODO: adaptive discriminator augmentation
-class StyleGan(Gan):
-    TEST = Config({
-        'style_mix_prob': .9,
-        'G': {'reg': {
-            'interval': 4,
-            'weight': 2.,
-            'batch_shrink': 2,
-            'decay': 0.01,
-        }},
-        'D': {'reg': {
-            'interval': 16,
-            'weight': 1.
-        }},
-    })
+# TODO: comments, docstrings, type hints
 
-    def __init__(s, cfg, aug=None):
-        super().__init__(
-            aug,
-            cfg.G.reg.interval,
-            cfg.G.reg.weight,
-            cfg.D.reg.interval,
-            cfg.D.reg.weight,
-        )
-        s._style_mix_prob = cfg.style_mix_prob
-        s._pl_batch_shrink = cfg.G.reg.batch_shrink
-        s._pl_decay = cfg.G.reg.decay
+
+class StyleGan(Gan):
+    @staticmethod
+    def from_cfg(cfg: Config, aug=None):
+        return StyleGan(aug, cfg.style_mix_prob, cfg.G.reg.interval,
+            cfg.G.reg.weight, cfg.G.reg.batch_shrink, cfg.G.reg.decay,
+            cfg.D.reg.interval, cfg.D.reg.weight)
+
+    def __init__(s,
+        aug=None,
+        style_mix_prob=.9,
+        g_reg_interval=4,
+        g_reg_weight=2.,
+        g_reg_batch_shrink=2,
+        g_reg_decay=.01,
+        d_reg_interval=16,
+        d_reg_weight=.1,
+    ):
+        super().__init__(aug, g_reg_interval, g_reg_weight, d_reg_interval,
+            d_reg_weight)
+        s._style_mix_prob = style_mix_prob
+        s._pl_batch_shrink = g_reg_batch_shrink
+        s._pl_decay = g_reg_decay
         s._pl_mean = None
 
     def _g_reg(s, models, batch):

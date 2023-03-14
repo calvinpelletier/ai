@@ -11,7 +11,7 @@ from ai.model.linear import fc
 from ai.model.norm import AdaLIN
 from ai.model.actv import build_actv
 from ai.model.sequence import seq
-from ai.model.etc import Clamp, blur
+from ai.model.etc import Clamp, blur, Gain
 
 
 def modconv(
@@ -80,6 +80,8 @@ class NormModConv(nn.Module):
             by a scale factor of 1/stride before using a conv of stride=1
         actv : str or null
             activation (see model/actv.py)
+        gain : float or null
+            multiply by constant value
         clamp : float or null
             clamp all output values between [-clamp, clamp]
         noise : bool
@@ -100,6 +102,7 @@ class NormModConv(nn.Module):
         k: int = 3,
         stride: Union[int, float] = 1,
         actv: Optional[str] = 'mish',
+        gain: Optional[float] = None,
         clamp: Optional[float] = None,
         noise: bool = False,
         padtype: str = 'zeros',
@@ -127,6 +130,8 @@ class NormModConv(nn.Module):
             post.append(Noise())
         if actv is not None:
             post.append(build_actv(actv))
+        if gain is not None:
+            post.append(Gain(gain))
         if clamp is not None:
             post.append(Clamp(clamp))
         s._post = seq(*post)
@@ -159,6 +164,8 @@ class WeightModConv(nn.Module):
             TODO: option for resampling instead of transposed conv
         actv : str or null
             activation (see model/actv.py)
+        gain : float or null
+            multiply by constant value
         clamp : float or null
             clamp all output values between [-clamp, clamp]
         noise : bool
@@ -176,6 +183,7 @@ class WeightModConv(nn.Module):
         k: int = 3,
         stride: Union[int, float] = 1,
         actv: Optional[str] = 'mish',
+        gain: Optional[float] = None,
         clamp: Optional[float] = None,
         noise: bool = False,
         scale_w: bool = True,
@@ -199,7 +207,7 @@ class WeightModConv(nn.Module):
 
         # if upsampling, blur output of the transposed conv
         if s._stride < 1:
-            s._blur = blur(up=1, pad=[1,1,1,1], gain=4.)
+            s._blur = blur(pad=[1,1,1,1], gain=4.)
 
         # post-conv operations
         post = []
@@ -207,6 +215,8 @@ class WeightModConv(nn.Module):
             post.append(Noise())
         if actv is not None:
             post.append(build_actv(actv))
+        if gain is not None:
+            post.append(Gain(gain))
         if clamp is not None:
             post.append(Clamp(clamp))
         s._post = seq(*post)

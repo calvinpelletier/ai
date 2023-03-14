@@ -19,7 +19,7 @@ def test_reconstruction():
 def _test_trainer(env, data, model, device='cuda', bs=8, lr=1e-3):
     model.to(device)
     opt = torch.optim.SGD(model.parameters(), lr=lr)
-    data = data.loader(bs, device, train=True)
+    data = data.iterator(bs, device, train=True)
     sample = next(iter(data))
 
     with torch.no_grad():

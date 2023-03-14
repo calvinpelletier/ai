@@ -26,17 +26,17 @@ class ImgDataset(Dataset):
         '''
 
         # parse path to dataset
-        path = dataset_path(path)
-        if not path.exists():
-            raise ValueError(f'missing dataset: {path}')
+        ds_path = dataset_path(path)
+        if not ds_path.exists():
+            raise ValueError(f'missing dataset: {ds_path}')
 
         # resize imgs if needed
-        dir = path / str(imsize)
+        dir = ds_path / str(imsize)
         if not dir.exists():
-            src_imsize = _choose_src_imsize(path, imsize)
+            src_imsize = _choose_src_imsize(ds_path, imsize)
             print(f'\nresizing images from {src_imsize} to {imsize}...')
             img_util.resize_dir(
-                path / str(src_imsize) / 'data',
+                ds_path / str(src_imsize) / 'data',
                 dir / 'data',
                 imsize,
             )

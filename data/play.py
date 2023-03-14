@@ -22,10 +22,10 @@ class SelfPlay(RLDataIterator):
             player,
             batch_size=cfg.batch_size,
             device=cfg.device,
+            model_update_interval=cfg.model_update_interval,
             n_workers=cfg.data.n_workers,
             infer_bs=cfg.infer.batch_size,
             infer_device=cfg.infer.device,
-            model_update_interval=cfg.model_update_interval,
             buf_size=cfg.data.buf_size,
             n_replay_times=cfg.data.n_replay_times,
         )
@@ -34,17 +34,15 @@ class SelfPlay(RLDataIterator):
         game: Game,
         player: Player,
 
-        # output
+        # external configuration
         batch_size: int = 32,
         device: str = 'cuda',
+        model_update_interval: int = 100,
 
-        # generate
+        # internal configuration
         n_workers: Optional[int] = None,
         infer_bs: int = 64,
         infer_device: Optional[str] = None,
-        model_update_interval: int = 100,
-
-        # buffer
         buf_size: Optional[int] = None,
         n_replay_times: int = 4,
     ):

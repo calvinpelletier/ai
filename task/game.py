@@ -2,9 +2,10 @@ from copy import deepcopy
 
 from ai.game.player import RandomPlayer
 from ai.util import no_op
+from ai.task.base import Task
 
 
-class GameTask:
+class GameTask(Task):
     def __init__(s, game, player, n_matches=256):
         assert game.n_players == 2, 'TODO: non-2-player games'
         s._game = deepcopy(game)

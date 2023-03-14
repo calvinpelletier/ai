@@ -4,7 +4,7 @@ from functools import partial
 from ai.util.logger import Tensorboard
 from ai.train.hook import Hook
 from ai.lab.base import LabEntity
-from ai.train.schedule import Logarithmic
+from ai.util.schedule import Logarithmic
 
 
 class Trial(LabEntity):

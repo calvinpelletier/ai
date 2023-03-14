@@ -9,7 +9,3 @@ class LabEntity:
         if clean and s.path.exists():
             rmtree(s.path)
         s.path.mkdir(parents=True, exist_ok=True)
-
-    def clean(s):
-        rmtree(s.path)
-        s.path.mkdir()

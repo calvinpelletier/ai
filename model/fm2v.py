@@ -2,6 +2,7 @@
 
 import torch
 from typing import Optional, Union
+from numpy import sqrt
 
 from ai.model.linear import fc
 from ai.model.conv2d import conv
@@ -69,7 +70,8 @@ def mbstd(
 
     return seq(
         MinibatchStd(group_size=mbstd_group_size, nc=mbstd_nc),
-        conv(nc + mbstd_nc, nc, actv=actv, clamp=clamp, scale_w=scale_w),
+        conv(nc + mbstd_nc, nc, actv=actv, clamp=clamp, scale_w=scale_w,
+            gain=sqrt(2)),
         flatten(),
         fc(nc * res**2, nc, actv=actv, scale_w=scale_w),
         fc(nc, n_out, actv=final_actv, scale_w=scale_w),

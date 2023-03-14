@@ -6,7 +6,9 @@ from ai.util.etc import (
     gen_uuid,
     softmax,
     softmax_sample_idx,
+    on_interval,
 )
+from ai.util.img import create_img_grid, save_img_grid
 from ai.util.testing import (
     assert_equal,
     assert_shape,

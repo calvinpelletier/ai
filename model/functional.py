@@ -8,12 +8,12 @@ from typing import Union
 
 ALIGN_CORNERS_MODES = ['linear', 'bilinear', 'trilinear', 'bicubic']
 
-def resample(x: Tensor, stride: Union[int, float], mode: str = 'bilinear'):
-    '''Resample x by scale factor of 1/stride.'''
+def resample(x: Tensor, scale: Union[int, float], mode: str = 'bilinear'):
+    '''Resample x by scale factor.'''
 
     return F.interpolate(
         x,
-        scale_factor=1 / stride,
+        scale_factor=scale,
         mode=mode,
         align_corners=True if mode in ALIGN_CORNERS_MODES else None,
     )

@@ -17,8 +17,6 @@ class Generator(m.Model):
         clamp=256,
     ):
         super().__init__()
-
-        # expose so external code can sample the latent space
         s.imsize = imsize
         s.z_dim = z_dim
 
@@ -51,6 +49,7 @@ class SynthesisNetwork(m.Module):
             x, img = block(x, img, ws.narrow(1, 2*i, 2))
         return img
 
+
 class SynthesisBlock(m.Module):
     def __init__(s, nc1, nc2, z_dim, clamp):
         super().__init__()
@@ -59,17 +58,17 @@ class SynthesisBlock(m.Module):
             'actv': 'lrelu',
             'clamp': clamp,
             'scale_w': True,
+            'gain': sqrt(2),
         }
         s.conv0 = m.modconv(nc1, nc2, z_dim, stride=.5, noise=True, **kw)
         s.conv1 = m.modconv(nc2, nc2, z_dim, noise=True, **kw)
         s.to_rgb = m.modconv(nc2, 3, z_dim, **kw)
-        s.upsample = m.blur(up=2, pad=[2,1,2,1], gain=4.)
 
     def forward(s, x, img, ws):
         x = s.conv0(x, ws[:, 0, :])
         x = s.conv1(x, ws[:, 1, :])
         y = s.to_rgb(x, ws[:, 1, :])
-        img = y if img is None else y + s.upsample(img)
+        img = y if img is None else y + m.f.resample(img, 2)
         return x, img
 
 
@@ -102,7 +101,8 @@ class MappingNetwork(m.Module):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class Discriminator(m.Model):
     def __init__(s, imsize, nc_min=32, nc_max=512, clamp=256, smallest=4):
-        initial = m.conv(3, nc_min, k=1, actv='lrelu', clamp=clamp)
+        initial = m.conv(3, nc_min, k=1, actv='lrelu', clamp=clamp,
+            scale_w=True, gain=sqrt(2))
 
         main = m.pyramid(
             imsize, smallest,
@@ -114,13 +114,18 @@ class Discriminator(m.Model):
 
         super().__init__(m.seq(initial, main, final))
 
+
 def discrim_block(nc1, nc2, clamp=256):
-    gain = sqrt(0.5)
+    all = {'scale_w': True}
+    main = {'actv': 'lrelu'}
+    shortcut = {'k': 1, 'bias': False}
+    down = {'stride': 2, 'blur': True, 'clamp': clamp * sqrt(0.5)}
+    flat = {'clamp': clamp}
     return m.res(
         m.seq(
-            m.conv(nc1, nc1, actv='lrelu', clamp=clamp),
-            m.conv(nc1, nc2, stride=2, actv='lrelu', clamp=clamp, gain=gain),
+            m.conv(nc1, nc1, **all, **main, **flat, gain=sqrt(2)),
+            m.conv(nc1, nc2, **all, **main, **down), # gain=sqrt(2)*sqrt(.5)=1
         ),
-        m.conv(nc1, nc2, k=1, stride=2, bias=False, gain=gain),
+        m.conv(nc1, nc2, **all, **shortcut, **down, gain=sqrt(0.5)),
     )
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,13 +1,13 @@
 import torch
+from torch.optim import Optimizer
 import math
 from typing import Optional, Callable, Iterable, Any, Union, Dict
 
 from ai.train.hook import HookInterface, NullHook
 from ai.util import Timer, no_op
-from ai.train.log import log as train_log
+from ai.train.logger import log as train_log
 from ai.model import Model
-from ai.train.opt import OptLike
-from ai.train.util import on_interval
+from ai.util import on_interval
 
 
 class _Base:
@@ -27,7 +27,7 @@ class _Base:
 
     def train(s,
         model: Union[Model, Dict[str, Model]],
-        opt: Union[OptLike, Dict[str, OptLike]],
+        opt: Union[Optimizer, Dict[str, Optimizer]],
         hook: Optional[HookInterface] = None,
         step: int = 0,
         timelimit: Optional[int] = None,
@@ -85,7 +85,7 @@ class _Base:
         '''
 
         # switch model to eval mode
-        if isinstance(dict, model):
+        if isinstance(model, dict):
             for x in model.values():
                 x.eval()
         else:

@@ -12,16 +12,16 @@ def transfer_data(data, device):
         raise ValueError(f'unexpected data type: {typeof(data)}')
 
 
-def data_iter(loader, device, postprocessor=None):
-    for batch in loader:
+def data_iter(iterator, device, postprocessor=None):
+    for batch in iterator:
         batch = transfer_data(batch, device)
         batch = process_data(batch, postprocessor)
         yield batch
 
 
-def inf_data_iter(loader, device, postprocessor=None):
+def inf_data_iter(iterator, device, postprocessor=None):
     while 1:
-        for batch in loader:
+        for batch in iterator:
             batch = transfer_data(batch, device)
             batch = process_data(batch, postprocessor)
             yield batch

@@ -18,7 +18,7 @@ def calc_fid(gen, ds_stats, n=10_000, device='cuda', bs=64, n_workers=8):
 
 def calc_fid_stats_for_dataset(ds, device='cuda', bs=64, n_workers=8):
     model = _inception(device)
-    data = ds.loader(bs, device, n_workers)
+    data = ds.iterator(bs, device, n_workers)
 
     feats = np.empty([ds.length(bs), DIMS])
     i = 0

@@ -3,8 +3,8 @@ from torch import nn
 
 from ai.util import assert_shape
 from ai.util.img import resize
-from ai.loss.face_id.arcface import ArcFace
-from ai.loss.loss import Loss
+from ai.train.loss.face_id.arcface import ArcFace
+from ai.train.loss.loss import Loss
 
 
 class FaceIdentityLoss(Loss):
