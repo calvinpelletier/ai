@@ -32,7 +32,7 @@ class _Base:
         step: int = 0,
         timelimit: Optional[int] = None,
         steplimit: Optional[int] = None,
-    ):
+    ) -> int:
         '''Run training.
 
         ARGS
@@ -50,7 +50,7 @@ class _Base:
             steplimit
                 An optional limit of the number of training steps.
         RETURNS
-            whatever hook.done() returns
+            The current step.
         '''
 
         # use a null hook if a hook isnt provided
@@ -138,8 +138,8 @@ class Trainer(_Base):
             train_log('loss', loss)
             s._post_step(step, model)
             step += 1
-
-        return hook.done()
+        hook.done()
+        return step
 
     def _validate(s, model, data, log):
         loss = 0.
@@ -193,5 +193,5 @@ class MultiTrainer(_Base):
             # ~
 
             step += 1
-
-        return hook.done()
+        hook.done()
+        return step

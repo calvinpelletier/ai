@@ -11,7 +11,7 @@ from ai.util import print_header
 
 
 class Experiment(LabEntity):
-    def __init__(s, path, clean=False, direction='min', prune=True, **trial_kw):
+    def __init__(s, path, clean=False, direction='min', prune=False, **trial_kw):
         super().__init__(path, clean)
         assert direction in ['min', 'max']
         if prune:

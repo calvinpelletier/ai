@@ -1,12 +1,12 @@
 import torch
 
 from ai.util.testing import *
-from ai.data.toy import moons_dataset
+from ai.data.datasets.toy import moons
 from ai.util import print_info
 
 
 def test_moons_dataset():
-    ds = moons_dataset(n=128)
+    ds = moons(n=128)
     assert len(ds) == 128
 
     batch = ds.sample(16, DEVICE)

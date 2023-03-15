@@ -52,7 +52,7 @@ def run(outpath, steplimit=5000, **kw):
 
 
 def _save_samples(dir, step, models):
-    G = models['G'].eval()
+    G = models['G']
     with ai.no_grad():
         out = G(torch.randn(64, G.z_dim, device=G.get_device()))
     ai.util.img.save_img_grid(

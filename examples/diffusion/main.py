@@ -17,7 +17,7 @@ def run(outpath):
 
     model = DiffusionMLP(2).init().to(DEVICE)
 
-    opt = ai.opt.adamw(model, lr=1e-3, grad_clip=True)
+    opt = ai.opt.AdamW(model, lr=1e-3, grad_clip=True)
 
     trial = ai.Trial(
         outpath,

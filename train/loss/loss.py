@@ -17,6 +17,8 @@ class Loss(torch.nn.Module):
 class ComboLoss(torch.nn.Module):
     def __init__(s, **kwargs):
         super().__init__()
+        s.prefix = 'loss'
+
         s._losses = []
         for k, v in kwargs.items():
             if isinstance(v, tuple) or isinstance(v, list):
@@ -29,6 +31,6 @@ class ComboLoss(torch.nn.Module):
         total_loss = 0.
         for name, fn, weight in s._losses:
             loss = fn(*a, **kw) * weight
-            log(f'loss.{name}', loss)
+            log(f'{s.prefix}.{name}', loss)
             total_loss += loss
         return total_loss

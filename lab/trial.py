@@ -91,19 +91,19 @@ class Trial(LabEntity):
 
         print('[INFO] saved snapshot')
 
-    # def load_snapshot(s, model, opt=None, snapshot='latest'):
-    #     path = s.path / 'snapshots' / snapshot
-    #     if isinstance(model, dict):
-    #         models, opts = model, opt
-    #         for k, model in models.items():
-    #             model.init(path / f'model_{k}.pt')
-    #         if opt is not None:
-    #             for k, opt in opts.items():
-    #                 opt.load_state_dict(torch.load(path / f'opt_{k}.pt'))
-    #     else:
-    #         model.init(path / 'model.pt')
-    #         if opt is not None:
-    #             opt.load_state_dict(torch.load(path / 'opt.pt'))
+    def load_snapshot(s, model, opt=None, snapshot='latest'):
+        path = s.path / 'snapshots' / snapshot
+        if isinstance(model, dict):
+            models, opts = model, opt
+            for k, model in models.items():
+                model.init(path / f'model_{k}.pt')
+            if opt is not None:
+                for k, opt in opts.items():
+                    opt.load_state_dict(torch.load(path / f'opt_{k}.pt'))
+        else:
+            model.init(path / 'model.pt')
+            if opt is not None:
+                opt.load_state_dict(torch.load(path / 'opt.pt'))
 
     def model_path(s, key=None, snapshot='latest'):
         fname = 'model' if key is None else f'model_{key}'

@@ -135,6 +135,7 @@ class Hook(HookInterface):
 
         s._step = None
         s._is_log_step = False
+        s._evaluating = False
 
         # set by trainer via s.setup()
         s._model = None
@@ -160,25 +161,17 @@ class Hook(HookInterface):
         s._step = step
         s._check_log_step()
         stop = s._run_subhooks()
-
-        if isinstance(s._model, dict):
-            for model in s._model.values():
-                model.train()
-        else:
-            s._model.train()
-
         return stop
 
-    def done(s) -> Optional[Union[torch.Tensor, float]]:
+    def done(s):
         if s._print:
             print_header(f'DONE (step={s._step})')
-        val_loss = s._run_subhooks(True)
+        s._run_subhooks(True)
         if s._print:
             print_header('')
-        return val_loss
 
     def train_log(s, k: str, v: Union[int, float, torch.Tensor]):
-        if s._is_log_step:
+        if s._is_log_step and not s._evaluating:
             s.log('train.'+k, v)
 
     def val_log(s, k, v):
@@ -201,6 +194,7 @@ class Hook(HookInterface):
             s._log['fn'](s._step, k, v)
 
     def _run_subhooks(s, is_done=False):
+        s._evaluating = True
         if isinstance(s._model, dict):
             for model in s._model.values():
                 model.eval()
@@ -210,11 +204,13 @@ class Hook(HookInterface):
         stop = False
         val_loss = None
         with torch.no_grad():
-            if s._save is not None and s._save['interval'](s._step):
-                s._save['fn'](s._step, s._model, s._opt)
+            if s._save is not None:
+                if is_done or s._save['interval'](s._step):
+                    s._save['fn'](s._step, s._model, s._opt)
 
-            if s._sample is not None and s._sample['interval'](s._step):
-                s._sample['fn'](s._step, s._model)
+            if s._sample is not None:
+                if is_done or s._sample['interval'](s._step):
+                    s._sample['fn'](s._step, s._model)
 
             if s._val is not None:
                 if is_done or s._val['interval'](s._step):
@@ -230,8 +226,13 @@ class Hook(HookInterface):
                         if s._task['stopper'](s._step, result):
                             stop = True
 
-        if is_done:
-            return val_loss
+        s._evaluating = False
+        if isinstance(s._model, dict):
+            for model in s._model.values():
+                model.train()
+        else:
+            s._model.train()
+
         return stop
 
     def _check_log_step(s):

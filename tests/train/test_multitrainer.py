@@ -2,7 +2,7 @@ import torch
 
 from ai.util.testing import *
 from ai.train import MultiTrainer
-from ai.train.gan import Gan
+from ai.train.env.gan import Gan
 from ai.data.img import ImgDataset
 from ai.examples.stylegan2.model import Generator, Discriminator
 from ai.examples.stylegan2.train import StyleGan
@@ -22,7 +22,7 @@ def test_gan():
 
 def test_stylegan():
     _test_multitrainer(
-        StyleGan(StyleGan.TEST),
+        StyleGan(),
         ImgDataset('ffhq', 64),
         {
             'G': Generator(64).init(),

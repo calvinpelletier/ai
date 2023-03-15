@@ -1,9 +1,9 @@
 from ai.util.testing import *
-from ai.data.mnist import mnist_dataset
+from ai.data import mnist
 
 
 def test_mnist_dataset():
-    ds = mnist_dataset()
+    ds = mnist()
     assert len(ds) == 70000
 
     train_ds, val_ds = ds.split(.9, .1)

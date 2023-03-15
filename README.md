@@ -4,6 +4,8 @@ A PyTorch-based machine learning library designed for quick and easy experimenta
 
 Full API reference coming soon.
 
+## Examples
+
 MNIST classification example:
 
 ```python
@@ -43,40 +45,16 @@ Reinforcement learning example: [AlphaZero](examples/alphazero/main.py)
 
 More examples: [ai/examples](examples)
 
-# Train
+## Table of Contents
 
-This is the simplest way to train a model:
-```python
-import ai
-
-ai.Trainer(env, data).train(model, opt)
-```
-Where `env` is a callable that calculates the loss, `data` is an iterable that produces batches of training data, and `opt` is the optimizer.
-
-There are five main parts to the `ai.train` module: trainers, environments, hooks, optimizers, and loss functions.
-
-### Trainers
-
-Trainers loop over a data iterator, call the environment, backprop the loss, and step the optimizer. They have two methods: `.train()` and `.validate()`. There are currently 2 trainers:
-
-1) `Trainer`
-2) `MultiTrainer` for training multiple models simultaneously as they interact with each other.
-
-### Training Environments
-
-A training environement is a callable that takes 3 arguments (the model, a batch of data, and the current step number) and returns a loss value. For multi-training, it takes 4 arguments (the current phase, a dict of models, a batch of data, and the step number). See [ai/train/env/diffusion.py](train/env/diffusion.py) for an example of an environment, and [ai/train/env/gan.py](train/env/gan.py) for an example of a multi-training environment.
-
-### Training Hooks
-
-Training hooks handle everything not directly responsible for model training (logging, validation, saving snapshots, saving samples, running evaluation tasks, checking for early stopping, etc.). The trainer calls the hook at the beginning of every training step. The simplest way to use them is to create one from a `Trial` object (discussed in the "Lab" section), or you can implement your own by extending `ai.train.HookInterface`. See [ai/train/hook.py](train/hook.py) for more info.
-
-### Optimizers
-
-Optimizers created via `ai.train.opt` (or simply `ai.opt`) are essentially just torch optimizers plus optional gradient clipping. There's also some QoL stuff like `ai.opt.build` which creates an optimizer from a `Config` object.
-
-### Loss functions
-
-`ai.train.loss` (or `ai.loss`) is still in the early phase of development but it has a few useful loss functions like `ai.loss.PerceptualLoss` for LPIPS or traditional perceptual loss, and `ai.loss.ComboLoss` for doing weighted sums of multiple losses.
+- [Model](#model)
+- [Train](#train)
+- [Data](#data)
+- [Lab](#lab)
+- [Infer](#infer)
+- [Game](#game)
+- [Task](#task)
+- [Util](#util)
 
 # Model
 
@@ -274,11 +252,46 @@ RL example: [MuZero MLP](examples/muzero/model.py)
 
 Diffusion example: [Diffusion MLP](examples/diffusion/model.py)
 
+# Train
+
+This is the simplest way to train a model:
+```python
+import ai
+
+ai.Trainer(env, data).train(model, opt)
+```
+Where `env` is a callable that calculates the loss, `data` is an iterable that produces batches of training data, and `opt` is the optimizer.
+
+There are five main parts to the `ai.train` module: trainers, environments, hooks, optimizers, and loss functions.
+
+### Trainers
+
+Trainers loop over a data iterator, call the environment, backprop the loss, and step the optimizer. They have two methods: `.train()` and `.validate()`. There are currently 2 trainers:
+
+1) `Trainer`
+2) `MultiTrainer` for training multiple models simultaneously as they interact with each other.
+
+### Training Environments
+
+A training environement is a callable that takes 3 arguments (the model, a batch of data, and the current step number) and returns a loss value. For multi-training, it takes 4 arguments (the current phase, a dict of models, a batch of data, and the step number). See [ai/train/env/diffusion.py](train/env/diffusion.py) for an example of an environment, and [ai/train/env/gan.py](train/env/gan.py) for an example of a multi-training environment.
+
+### Training Hooks
+
+Training hooks handle everything not directly responsible for model training (logging, validation, saving snapshots, saving samples, running evaluation tasks, checking for early stopping, etc.). The trainer calls the hook at the beginning of every training step. The simplest way to use them is to create one from a `Trial` object (discussed in the "Lab" section), or you can implement your own by extending `ai.train.HookInterface`. See [ai/train/hook.py](train/hook.py) for more info.
+
+### Optimizers
+
+Optimizers created via `ai.train.opt` (or simply `ai.opt`) are essentially just torch optimizers plus optional gradient clipping. There's also some QoL stuff like `ai.opt.build` which creates an optimizer from a `Config` object.
+
+### Loss functions
+
+`ai.train.loss` (or `ai.loss`) is still in the early phase of development but it has a few useful loss functions like `ai.loss.PerceptualLoss` for LPIPS or traditional perceptual loss, and `ai.loss.ComboLoss` for doing weighted sums of multiple losses.
+
 # Data
 
 ### Dataset
 
-`ai.data.Dataset` (and its subclasses) is a representation of a dataset that can be held in memory all at once. Calling the `iterator` method launches one or more data workers (which begin loading/generating and preprocessing data) and returns a `DataIterator`. Iterating over the `DataLoader` fetches batches of data from the worker(s), transfers them to the appropriate device, a runs postprocessing.
+`ai.data.Dataset` (and its subclasses) is a representation of a dataset that can be held in memory all at once. Calling the `iterator` method launches one or more data workers (which begin loading/generating and preprocessing data) and returns a `DataIterator`. Iterating over the `DataIterator` fetches batches of data from the worker(s), transfers them to the appropriate device, a runs postprocessing.
 
 MNIST example:
 
@@ -370,7 +383,7 @@ data = ai.data.SelfPlay(
 )
 ```
 
-NOTE: I recommend using `None` for the number of workers for now. Torch data loaders max out at 12 workers which isn't enough to justify the added latency of using a remote inferencer. I implemented a custom lightweight version of it but still maxed out around 20 workers. I'm working on a solution where each worker process is also multi-threaded (GIL shouldn't be an issue since the workers are mainly i/o bound with the inferencer calls).
+NOTE: I recommend using `None` for the number of workers for now. Torch data loaders max out at 12 workers which isn't enough to justify the added latency of using a remote inferencer. I implemented a custom lightweight version of it but still maxed out around 20 workers on my laptop. I'm working on a solution where each worker process is also multi-threaded (GIL shouldn't be an issue since the workers are mainly i/o bound with the inferencer calls).
 
 # Lab
 
@@ -497,12 +510,15 @@ for loss_name, loss_fn in losses:
 Finally, we could compare the results by creating an image grid of the models' outputs.
 
 ```python
+model.eval()
 comparison = [samples]
 for loss_name, _ in losses:
-    model.init(study.trial(loss_name).get_model_path()) # load params from disk
+    model.init(study.trial(loss_name).model_path()) # load params from disk
     comparison.append(model(samples))
 ai.util.save_img_grid(study.path / 'comparison.png', comparison)
 ```
+
+See [ai/examples/imsim](examples/imsim/main.py).
 
 # Infer
 
@@ -556,7 +572,7 @@ del inferencer
 
 For more information, see [Inferencer](infer/inferencer.py) and [InferenceClient](infer/client.py).
 
-# Game
+# Game 
 
 Games
 - `ai.game.Chess`
@@ -576,3 +592,11 @@ Algorithms
 ### MCTS
 
 `ai.game.MonteCarloTreeSearch` supports both modeled (e.g. MuZero) and model-free (e.g. AlphaZero) reinforcement learning. It takes 3 arguments: an `ai.game.MctsConfig` config object, a callable player, and optional value bounds for normalization (if not given, it will figure it out during play). To get a policy, pass a game object to the `run` method.
+
+# Task
+
+TODO
+
+# Util
+
+TODO

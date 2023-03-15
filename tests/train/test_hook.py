@@ -9,7 +9,7 @@ from ai.data.img import ImgDataset
 from ai.model.ae import ImgAutoencoder
 from ai.util.logger import Tensorboard
 from ai.train.hook import Hook
-from ai.train.gan import Gan
+from ai.train.env.gan import Gan
 from ai.examples.stylegan2.model import Generator, Discriminator
 from ai.examples.stylegan2.train import StyleGan
 
@@ -44,7 +44,7 @@ def _train(hook):
 
 
 def _multitrain(hook):
-    env = StyleGan(StyleGan.TEST)
+    env = StyleGan()
     data = ImgDataset('ffhq', 64).iterator(8, DEVICE, train=True)
 
     models = {
