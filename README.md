@@ -32,7 +32,7 @@ ai.Trainer(
     ai.train.Classify(), # training environment
     train_ds.iterator(batch_size, device, train=True), # training data
 ).train(
-    model.init().train().to(device), # model
+    model.init().to(device), # model
     ai.opt.Adam(model, lr=1e-3), # optimizer
     trial.hook(), # training hook
     timelimit=10,
