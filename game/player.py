@@ -1,10 +1,11 @@
+# type: ignore
 import random
 import numpy as np
 import torch
 
 from ai.game.mcts import MonteCarloTreeSearch
 from ai.util import softmax_sample_idx
-from ai.config import Config
+from ai.util.config import Config
 from ai.game.game import Game
 from ai.model import Model
 

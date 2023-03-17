@@ -1,6 +1,6 @@
 from shutil import rmtree
 
-from ai.path import lab_path
+from ai.util.path import lab_path
 
 
 class LabEntity:

@@ -194,6 +194,7 @@ class Hook(HookInterface):
             s._log['fn'](s._step, k, v)
 
     def _run_subhooks(s, is_done=False):
+        assert s._model is not None
         s._evaluating = True
         if isinstance(s._model, dict):
             for model in s._model.values():
@@ -252,6 +253,7 @@ class Hook(HookInterface):
         if s._last_log_step is None:
             steps_per_sec = 0.
         else:
+            assert s._step is not None and s._last_log_time is not None
             step_delta = s._step - s._last_log_step
             time_delta = ts - s._last_log_time
             steps_per_sec = step_delta / time_delta

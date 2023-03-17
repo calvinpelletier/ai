@@ -1,10 +1,11 @@
 import torch
+import torch.utils.data as torch_data
 from torchvision import datasets, transforms
 from pathlib import Path
 import numpy as np
 
 from ai.data.dataset import Dataset
-from ai.path import dataset_path, PathLike
+from ai.util.path import dataset_path, PathLike
 from ai.util.img import normalize
 from ai.util import print_info
 
@@ -41,7 +42,7 @@ def cifar10(path: PathLike = 'cifar10'):
 
     return Dataset(
         np.load(path),
-        postprocess={'x': normalize},
+        postprocess={'x': normalize}, # type: ignore
         default_split=[50_000, 10_000],
     )
 
@@ -91,7 +92,7 @@ def _load_torchvision_cifar10(path, train):
 
 
 def _create_loader(ds):
-    return torch.utils.data.DataLoader(
+    return torch_data.DataLoader(
         ds,
         batch_size=None,
         shuffle=False,

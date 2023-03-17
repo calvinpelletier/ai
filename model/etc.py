@@ -122,7 +122,7 @@ class Blur(nn.Module):
         x = x.reshape([bs, nc, h * s._up, w * s._up])
         x = F.pad(x, s._pad)
 
-        f = s._filter * (s._gain ** (s._filter.ndim / 2))
+        f = s._filter * (s._gain ** (s._filter.ndim / 2)) # type: ignore
         f = f.to(x.dtype)
         f = f.flip(list(range(f.ndim)))
         f = f[np.newaxis, np.newaxis].repeat([nc, 1] + [1] * f.ndim)

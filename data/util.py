@@ -9,7 +9,7 @@ def transfer_data(data, device):
     elif isinstance(data, dict):
         return {k: v.to(device) for k, v in data.items()}
     else:
-        raise ValueError(f'unexpected data type: {typeof(data)}')
+        raise ValueError(f'unexpected data type: {type(data)}')
 
 
 def data_iter(iterator, device, postprocessor=None):

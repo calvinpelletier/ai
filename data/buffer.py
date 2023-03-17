@@ -1,13 +1,13 @@
 import random
 import torch
 from collections import defaultdict
-from typing import Iterable, Dict
+from typing import Generator, Dict
 
 
 class DataBuffer:
     '''Buffer for storing generated data.'''
 
-    def __init__(s, generator: Iterable, batch_size: int, buf_size: int):
+    def __init__(s, generator: Generator, batch_size: int, buf_size: int):
         s._generator = generator
         s.batch_size = batch_size
         s.buf_size = buf_size
@@ -29,7 +29,7 @@ class ReplayBuffer(DataBuffer):
     '''Buffer for storing game replays.'''
 
     def __init__(s,
-        generator: Iterable,
+        generator: Generator,
         batch_size: int,
         buf_size: int,
         n_replay_times: int,

@@ -1,10 +1,10 @@
+# type: ignore
 import ai
 from ai.util.testing import *
 from ai.examples.alphazero import ExampleConfig, AlphaZeroMLP
 
 
 BS = 8
-
 
 def test_self_play():
     cfg = ExampleConfig()

@@ -1,33 +1,34 @@
 import torch
 from functools import partial
+from typing import Any, Optional, Iterable, Callable
 
 from ai.util.logger import Tensorboard
 from ai.train.hook import Hook
 from ai.lab.base import LabEntity
-from ai.util.schedule import Logarithmic
+from ai.util.schedule import Logarithmic, ScheduleConfig
 
 
 class Trial(LabEntity):
     def __init__(s,
         path,
-        clean=False,
+        clean: bool = False,
 
-        logger=Tensorboard,
-        log_interval=Logarithmic(1, 1024),
+        logger: Any = Tensorboard,
+        log_interval: ScheduleConfig = Logarithmic(1, 1024),
 
-        save_snapshots=False,
-        save_interval=Logarithmic(1024, 65536),
+        save_snapshots: bool = False,
+        save_interval: ScheduleConfig = Logarithmic(1024, 65536),
 
-        val_data=None,
-        val_interval=Logarithmic(128, 4096),
-        val_stopper=None,
+        val_data: Optional[Iterable] = None,
+        val_interval: ScheduleConfig = Logarithmic(128, 4096),
+        val_stopper: Optional[Callable] = None,
 
-        sampler=None,
-        sample_interval=Logarithmic(128, 65536),
+        sampler: Optional[Callable] = None,
+        sample_interval: ScheduleConfig = Logarithmic(128, 65536),
 
-        task=None,
-        task_interval=Logarithmic(1024, 65536),
-        task_stopper=None,
+        task: Optional[Callable] = None,
+        task_interval: ScheduleConfig = Logarithmic(1024, 65536),
+        task_stopper: Optional[Callable] = None,
     ):
         super().__init__(path, clean)
 
@@ -97,7 +98,7 @@ class Trial(LabEntity):
             models, opts = model, opt
             for k, model in models.items():
                 model.init(path / f'model_{k}.pt')
-            if opt is not None:
+            if opts is not None:
                 for k, opt in opts.items():
                     opt.load_state_dict(torch.load(path / f'opt_{k}.pt'))
         else:

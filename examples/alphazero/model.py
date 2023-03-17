@@ -8,7 +8,7 @@ class AlphaZeroMLP(m.Model):
 
         s.body = m.seq(
             m.flatten(),
-            m.fc(math.prod(game.ob_shape), layer_dim, actv='mish'),
+            m.fc(int(math.prod(game.ob_shape)), layer_dim, actv='mish'),
             m.repeat(n_layers, m.fc(layer_dim, layer_dim, actv='mish')),
         )
 

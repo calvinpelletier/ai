@@ -1,4 +1,5 @@
 import torch
+import torch.utils.data as torch_data
 import numpy as np
 from typing import Union, Optional, Callable, Iterable, Dict, List
 
@@ -39,8 +40,8 @@ class Dataset:
         '''
 
         # convert a loaded npz file to a dict
-        if isinstance(data, np.lib.npyio.NpzFile):
-            data = {k: data[k] for k in data.keys()}
+        if isinstance(data, np.lib.npyio.NpzFile): # type: ignore
+            data = {k: data[k] for k in data.keys()} # type: ignore
 
         s._data = data
         s._preprocess = preprocess
@@ -100,7 +101,7 @@ class Dataset:
         return ret
         # ~
 
-    def sample(s, n: int, device: torch.device = 'cuda'):
+    def sample(s, n: int, device: str = 'cuda'):
         '''Load n samples.
 
         ARGS
@@ -115,7 +116,7 @@ class Dataset:
 
     def iterator(s,
         batch_size: int,
-        device: torch.device = 'cuda',
+        device: str = 'cuda',
         n_workers: int = 1,
         train: bool = False,
         drop_last: bool = True,
@@ -156,7 +157,7 @@ def _slice(data, x, y):
     return data[x:y] if y is not None else data[x:]
 
 
-class _Dataset(torch.utils.data.Dataset):
+class _Dataset(torch_data.Dataset):
     def __init__(s, data, preprocess=None):
         super().__init__()
         s._data = data

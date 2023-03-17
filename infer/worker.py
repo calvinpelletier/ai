@@ -28,7 +28,6 @@ class InferenceWorker:
         host, port, db = redis_cfg
         s._broker = Redis(host=host, port=port, db=db)
 
-        s._debug = debug
         s._info = _Info() if debug else None
 
     def run(s):
@@ -51,7 +50,7 @@ class InferenceWorker:
             req_id = s._get_req(QUEUES.debug)
             if req_id is None:
                 break
-            assert s._debug
+            assert s._info is not None
             s._send_resp(req_id, s._info.export())
 
     def _check_for_params_update(s):
@@ -65,7 +64,7 @@ class InferenceWorker:
         if not reqs:
             sleep(SLEEP)
             return
-        if s._debug:
+        if s._info is not None:
             s._info.update_bs_avg(len(reqs))
 
         # run
@@ -107,6 +106,7 @@ class InferenceWorker:
 
 async def _async_wait_for_req(broker, queue, timeout=None):
     timer = Timer(timeout)
+    req = None
     while 1:
         req = broker.lpop(queue)
         if req is not None or timer():
@@ -150,7 +150,7 @@ class _Batcher:
         for i in range(len(args_batch)):
             args_batch[i] = torch.cat(args_batch[i], dim=0).to(s._device)
         for k in kwargs_batch:
-            kwargs_batch[k] = torch.cat(kwargs_batch[k], dim=0).to(s._device)
+            kwargs_batch[k] = torch.cat(kwargs_batch[k], dim=0).to(s._device) # type: ignore
 
         return id_batch, args_batch, kwargs_batch
 

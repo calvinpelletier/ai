@@ -2,11 +2,7 @@ from collections import namedtuple
 from typing import Union
 
 
-class ScheduleConfig:
-    pass
-
-
-class Logarithmic(ScheduleConfig):
+class Logarithmic:
     '''A schedule config where the interval grows exponentially.'''
 
     def __init__(s, start: int = 2**10, end: int = 2**16, mult: int = 2):
@@ -15,10 +11,13 @@ class Logarithmic(ScheduleConfig):
         s.mult = mult
 
 
+ScheduleConfig = Union[int, Logarithmic]
+
+
 class Schedule:
     '''A callable that returns whether a step is on or off schedule.'''
 
-    def __init__(s, cfg: Union[int, ScheduleConfig]):
+    def __init__(s, cfg: ScheduleConfig):
         if isinstance(cfg, int):
             s.freq = cfg
             s.mult = None

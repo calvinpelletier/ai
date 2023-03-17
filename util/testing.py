@@ -27,7 +27,7 @@ def assert_bounds(tensor, bounds):
     assert torch.max(tensor) <= bounds[1]
 
 
-def assert_autoencode(model, shape, device='cuda', lr=1e-3):
+def assert_autoencode(model, shape, device, lr=1e-3):
     model.init().to(device).train()
     x = torch.randn(*shape).to(device)
 

@@ -198,7 +198,7 @@ class Attention(nn.Module):
     def forward(s, q, kv, need_weights=False, **attn_kw):
         q = s._norm(q)
         kv = s._norm(kv)
-        out, weights = s._attn(q, k, v, need_weights=need_weights, **attn_kw)
+        out, weights = s._attn(q, kv, kv, need_weights=need_weights, **attn_kw)
         if need_weights:
             return out, weights
         return out

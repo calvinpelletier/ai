@@ -1,6 +1,4 @@
-from torchvision import datasets, transforms
-
-from ai.path import dataset_path, PathLike
+from ai.util.path import dataset_path, PathLike
 from ai.util import img as img_util
 from ai.data.dataset import Dataset
 

@@ -1,4 +1,4 @@
-import pytest
+import pytest # type: ignore
 
 from ai.util.testing import *
 from ai.data import ImgDataset

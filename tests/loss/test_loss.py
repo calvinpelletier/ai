@@ -1,5 +1,5 @@
 import torch
-import pytest
+import pytest # type: ignore
 
 from ai.util.testing import *
 from ai.train.loss import PerceptualLoss, FaceIdentityLoss, L2Loss
@@ -11,12 +11,12 @@ def test_l2_loss():
 
 @pytest.mark.filterwarnings('ignore:.*deprecated')
 def test_perceptual_loss():
-    _test(PerceptualLoss('lpips-alex', DEVICE))
-    _test(PerceptualLoss('lpips-vgg', DEVICE))
-    _test(PerceptualLoss('trad-vgg', DEVICE))
+    _test(PerceptualLoss('lpips-alex'))
+    _test(PerceptualLoss('lpips-vgg'))
+    _test(PerceptualLoss('trad-vgg'))
 
 def test_face_id_loss():
-    _test(FaceIdentityLoss(DEVICE))
+    _test(FaceIdentityLoss())
 
 
 def _model():

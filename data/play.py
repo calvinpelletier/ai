@@ -1,3 +1,4 @@
+# type: ignore
 import torch
 import numpy as np
 from copy import deepcopy
@@ -7,7 +8,7 @@ from ai.data.queue import DataQueue
 from ai.data.rl import RLDataIterator
 from ai.infer import Inferencer
 from ai.data.buffer import ReplayBuffer
-from ai.config import Config
+from ai.util.config import Config
 from ai.game import Game, Player
 
 

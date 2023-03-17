@@ -61,10 +61,10 @@ def fc(
     ops = [linear]
 
     if actv is not None:
-        ops.append(build_actv(actv))
+        ops.append(build_actv(actv)) # type: ignore
 
     if dropout is not None and dropout != 0.:
-        ops.append(nn.Dropout(dropout))
+        ops.append(nn.Dropout(dropout)) # type: ignore
 
     if len(ops) > 1:
         return nn.Sequential(*ops)

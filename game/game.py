@@ -38,7 +38,7 @@ class Game:
         raise NotImplementedError()
 
     def as_gameinfo(s) -> 'GameInfo':
-        return GameInfo(s.n_actions, s.history, s.to_play, s.ply)
+        return GameInfo(s.n_actions, s.history, s.to_play)
 
 
 class Game1p(Game):

@@ -258,8 +258,8 @@ class WeightModConv(nn.Module):
                 input=x,
                 weight=weight,
                 bias=None,
-                stride=s._stride,
-                padding=1,
+                stride=s._stride, # type: ignore
+                padding=1, # type: ignore
             )
 
         # post-conv scale

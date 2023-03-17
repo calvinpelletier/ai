@@ -67,7 +67,7 @@ def create_img_grid(tensors):
 
     for x, col in enumerate(tensors):
         for y, tensor in enumerate(col):
-            canvas.paste(to_pil(tensor), (w * x, h * y))
+            canvas.paste(to_pil(tensor), (w * x, h * y)) # type: ignore
 
     return canvas
 

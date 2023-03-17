@@ -3,7 +3,7 @@ import torch
 from typing import Union, Optional
 
 from ai.model.param import param_init
-from ai.path import PathLike
+from ai.util.path import PathLike
 
 
 class Model(torch.nn.Module):

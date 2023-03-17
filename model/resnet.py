@@ -12,7 +12,7 @@ def resblk(
     nc1: int,
     nc2: int,
     stride: Union[int, float] = 1,
-    actv: Optional[str] = 'mish',
+    actv: str = 'mish',
     norm: Optional[str] = 'batch',
     se: bool = True,
 ) -> nn.Module:

@@ -115,7 +115,7 @@ def conv(
         seq.append(nn.Conv2d(
             nc1, nc2,
             kernel_size=k,
-            stride=stride,
+            stride=stride, # type: ignore
             padding=0 if blur else (k - 1) // 2,
             padding_mode=padtype,
             bias=bias and not norm_has_bias,
@@ -217,6 +217,6 @@ class Conv2d(nn.Module):
             x,
             w,
             bias=b,
-            stride=s._stride,
-            padding=s._padding,
+            stride=s._stride, # type: ignore
+            padding=s._padding, # type: ignore
         )

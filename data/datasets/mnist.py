@@ -1,10 +1,11 @@
 import torch
+import torch.utils.data as torch_data
 from torchvision import datasets, transforms
 from pathlib import Path
 import numpy as np
 
 from ai.data.dataset import Dataset
-from ai.path import dataset_path, PathLike
+from ai.util.path import dataset_path, PathLike
 from ai.util.img import normalize
 
 
@@ -36,7 +37,7 @@ def mnist(path: PathLike = 'mnist') -> Dataset:
 
     return Dataset(
         np.load(path),
-        postprocess={'x': normalize},
+        postprocess={'x': normalize}, # type: ignore
         default_split=[60_000, 10_000],
     )
 
@@ -86,7 +87,7 @@ def _load_torchvision_mnist(path, train):
 
 
 def _create_loader(ds):
-    return torch.utils.data.DataLoader(
+    return torch_data.DataLoader(
         ds,
         batch_size=None,
         shuffle=False,

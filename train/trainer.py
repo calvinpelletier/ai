@@ -8,6 +8,7 @@ from ai.util import Timer, no_op
 from ai.train.logger import log as train_log
 from ai.model import Model
 from ai.util import on_interval
+from ai.data.rl import RLDataIterator
 
 
 class _Base:
@@ -60,11 +61,16 @@ class _Base:
         # set everything up
         hook.setup(model, opt, s.validate)
         train_log.setup(hook.train_log)
-        timer = Timer(timelimit)
-        steplimit = math.inf if steplimit is None else step + steplimit
 
         # run training
-        return s._train(model, opt, hook, step, timer, steplimit)
+        return s._train(
+            model, 
+            opt, 
+            hook, 
+            step, 
+            Timer(timelimit), 
+            math.inf if steplimit is None else step + steplimit,
+        )
 
     def validate(s,
         model: Union[Model, Dict[str, Model]],
@@ -118,8 +124,9 @@ class Trainer(_Base):
         super().__init__(env, data)
 
         # for reinforcement learning
-        s._data_wants_model_updates = hasattr(
-            s._train_data, 'model_update_interval')
+        s._model_update_interval = None
+        if isinstance(s._train_data, RLDataIterator):
+            s._model_update_interval = s._train_data.model_update_interval
 
     def _train(s, model, opt, hook, step, timer, steplimit):
         model.train()
@@ -152,11 +159,8 @@ class Trainer(_Base):
         return loss
 
     def _post_step(s, step, model):
-        if (step > 0 and
-            s._data_wants_model_updates and
-            on_interval(step, s._train_data.model_update_interval)
-        ):
-            s._train_data.model_update(model.state_dict())
+        if (step > 0 and on_interval(step, s._model_update_interval)):
+            s._train_data.model_update(model.state_dict()) # type: ignore
 
 
 class MultiTrainer(_Base):

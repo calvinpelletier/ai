@@ -1,5 +1,6 @@
 import numpy as np
 from uuid import uuid4
+from typing import Optional
 
 
 def log2_diff(a, b):
@@ -23,5 +24,5 @@ def softmax_sample_idx(x, t=1.):
     return np.random.choice(np.arange(len(x)), p=softmax(x, t))
 
 
-def on_interval(i: int, interval: int) -> bool:
+def on_interval(i: int, interval: Optional[int]) -> bool:
     return interval is not None and i % interval == 0

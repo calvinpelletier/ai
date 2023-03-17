@@ -1,13 +1,14 @@
 import torch
+import torch.utils.data as torch_data
 from typing import Optional, Callable, Union
 
 from ai.data.util import data_iter, inf_data_iter
 
 
 def create_data_iterator(
-    data: torch.utils.data.Dataset,
+    data: torch_data.Dataset,
     batch_size: int,
-    device: torch.device = 'cuda',
+    device: str = 'cuda',
     shuffle: bool = False,
     infinite: bool = False,
     drop_last: bool = True,
@@ -51,14 +52,14 @@ def create_data_iterator(
     else:
         raise ValueError(f'unexpected device: {device}')
 
-    loader = torch.utils.data.DataLoader(data, **loader_kwargs)
+    loader = torch_data.DataLoader(data, **loader_kwargs)
     return DataIterator(loader, device, infinite, postprocess)
 
 
 class DataIterator:
     def __init__(s,
-        loader: torch.utils.data.DataLoader,
-        device: str,
+        loader: torch_data.DataLoader,
+        device: Union[torch.device, str],
         infinite: bool = False,
         postprocessor: Optional[Callable] = None,
     ):

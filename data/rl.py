@@ -18,7 +18,7 @@ class RLDataIterator:
     def __iter__(s):
         return s
 
-    def __next__(s) -> Union[Tensor, Dict[str, Tensor]]:
+    def __next__(s):
         return transfer_data(s._buffer.get_batch(), s._device)
 
     def model_update(s, params: dict):

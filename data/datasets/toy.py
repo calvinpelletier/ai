@@ -1,3 +1,4 @@
+# type: ignore
 '''Toy datasets.'''
 
 from sklearn.datasets import make_moons
