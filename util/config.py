@@ -29,7 +29,7 @@ class Config(_Config):
 
         if override is not None:
             override = _load_if_pathlike(override)
-            cfg = _merge(cfg, override)
+            cfg = _override(cfg, override)
 
         super().__init__(cfg)
 
@@ -44,10 +44,26 @@ def _load_if_pathlike(cfg):
         return cfg
     return _load_yaml(cfg)
 
+
 def _load_yaml(path):
     with open(path, 'r') as f:
         x = yaml.safe_load(f)
     return x
+
+
+def _override(default, override):
+    ret = deepcopy(default)
+    for key, value in override.items():
+        assert key
+        parts = key.split('.')
+        if len(parts) > 1:
+            x = ret
+            for k in parts[:-1]:
+                x = ret[k]
+            x[parts[-1]] = value
+        else:
+            ret[key] = value
+    return ret
 
 
 def _merge(default, override):
