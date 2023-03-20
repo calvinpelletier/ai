@@ -49,14 +49,18 @@ More examples: [ai/examples](examples)
 
 `pip` package coming soon. In the meantime:
 
+Linux:
 ```bash
 git clone https://github.com/calvinpelletier/ai.git
+
 sudo apt update
 sudo apt install python3.9-venv
 python3.9 -m venv ./ai/.venv
 source ./ai/.venv/bin/activate
 pip install -r ai/requirements.txt
+
 export PYTHONPATH="$(pwd):$PYTHONPATH"
+export AI_DATASETS_PATH="/path/where/datasets/will/be/stored"
 python ai/examples/mnist/main.py /tmp/mnist --device=cpu
 ```
 
