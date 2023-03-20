@@ -1,21 +1,16 @@
-import torch
 import matplotlib.pyplot as plt
 
 import ai
 from ai.examples.diffusion.model import DiffusionMLP
 
 
-TRAIN_BS = 32
 EVAL_BS = 1000
-DEVICE = 'cpu'
-SAMPLE_INTERVAL = 500
-N_STEPS = 5000
 
 
-def run(outpath):
+def run(outpath, device='cpu', n_steps=5000, train_bs=32, sample_interval=500):
     ds = ai.data.toy.moons(n=8000, include_labels=False, mult=2.)
 
-    model = DiffusionMLP(2).init().to(DEVICE)
+    model = DiffusionMLP(2).init().to(device)
 
     opt = ai.opt.AdamW(model, lr=1e-3, grad_clip=True)
 
@@ -23,13 +18,13 @@ def run(outpath):
         outpath,
         clean=True,
         sampler=_save_samples,
-        sample_interval=SAMPLE_INTERVAL,
+        sample_interval=sample_interval,
     )
 
     ai.Trainer(
         ai.train.Diffusion(),
-        ds.iterator(TRAIN_BS, DEVICE, train=True),
-    ).train(model, opt, trial.hook(), steplimit=N_STEPS)
+        ds.iterator(train_bs, device, train=True),
+    ).train(model, opt, trial.hook(), steplimit=n_steps)
 
 
 def _save_samples(dir, step, model):

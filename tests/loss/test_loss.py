@@ -1,5 +1,5 @@
 import torch
-import pytest # type: ignore
+import pytest
 
 from ai.util.testing import *
 from ai.train.loss import PerceptualLoss, FaceIdentityLoss, L2Loss
