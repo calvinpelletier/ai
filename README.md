@@ -49,7 +49,7 @@ More examples: [ai/examples](examples)
 
 `pip` package coming soon. In the meantime:
 
-Linux:
+Ubuntu:
 ```bash
 git clone https://github.com/calvinpelletier/ai.git
 
@@ -310,7 +310,7 @@ Optimizers created via `ai.train.opt` (or simply `ai.opt`) are essentially just 
 
 ### Dataset
 
-`ai.data.Dataset` (and its subclasses) is a representation of a dataset that can be held in memory all at once. Calling the `iterator` method launches one or more data workers (which begin loading/generating and preprocessing data) and returns a `DataIterator`. Iterating over the `DataIterator` fetches batches of data from the worker(s), transfers them to the appropriate device, a runs postprocessing.
+`ai.data.Dataset` (and its subclasses) is a representation of a dataset that can be held in memory all at once. Calling the `iterator` method launches one or more data workers (which begin loading/generating and preprocessing data) and returns a `DataIterator`. Iterating over the `DataIterator` fetches batches of data from the worker(s), transfers them to the appropriate device, and runs postprocessing.
 
 MNIST example:
 
