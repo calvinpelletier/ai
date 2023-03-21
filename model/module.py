@@ -1,6 +1,6 @@
 from __future__ import annotations
 import torch
-from typing import Union, Optional
+from typing import Optional
 
 from ai.model.param import param_init
 from ai.util.path import PathLike
