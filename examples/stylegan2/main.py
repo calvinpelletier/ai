@@ -1,3 +1,4 @@
+# type: ignore
 import torch
 from pathlib import Path
 
@@ -18,7 +19,8 @@ def run(outpath, steplimit=5000, **kw):
         ds = ai.data.ImgDataset(cfg.data.dataset, cfg.data.imsize)
     except ValueError as e:
         print(e)
-        print(MISSING_FFHQ_MSG.format(imsize=cfg.data.imsize))
+        if cfg.data.dataset == 'ffhq':
+            print(MISSING_FFHQ_MSG.format(imsize=cfg.data.imsize))
         return
 
     task = ai.task.ImgGenTask(ds, cfg.device, cfg.task.bs, cfg.task.n_workers,

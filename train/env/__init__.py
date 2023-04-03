@@ -1,3 +1,4 @@
+from ai.train.env.aae import AdversarialAE
 from ai.train.env.base import Env, MultiEnv
 from ai.train.env.classify import Classify
 from ai.train.env.diffusion import Diffusion
