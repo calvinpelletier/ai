@@ -40,5 +40,5 @@ def pgn_splitter(f):
 def pgn_to_game(pgn):
     game = chess.pgn.read_game(io.StringIO(pgn))
     if len(game.errors):
-        return None, game.errors[0]
-    return game, None
+        raise Exception(str(game.errors))
+    return game

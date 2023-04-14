@@ -22,8 +22,7 @@ def _assert_pgns(pgns):
         assert pgn.rstrip('\n') == gt.rstrip('\n')
 
     for pgn in pgns:
-        game, error = pgn_to_game(pgn)
-        assert not error
+        game = pgn_to_game(pgn)
 
 
 if __name__ == '__main__':
