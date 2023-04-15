@@ -1,6 +1,8 @@
 import numpy as np
+import chess
+import chess.pgn
 
-from ai.game.chess.action import move_to_action
+from ai.game.chess.action import move_to_action, action_to_move
 
 
 RESULTS = {
@@ -8,6 +10,7 @@ RESULTS = {
     '0-1': -1,
     '1/2-1/2': 0,
 }
+
 
 class CompressedGame:
     def __init__(s, moves, times, meta):
@@ -17,8 +20,8 @@ class CompressedGame:
 
     @classmethod
     def from_chunk(cls, chunk, game_idx):
-        meta = chunk.games[game_idx]
-        start, end = meta[0], meta[1]
+        game = chunk.games[game_idx]
+        start, end, meta = game[0], game[1], game[2:]
         return cls(
             moves=chunk.moves[start:end],
             times=chunk.times[start:end],
@@ -26,7 +29,7 @@ class CompressedGame:
         )
 
     @classmethod
-    def from_lichess_game(cls, game, max_len=None):
+    def from_lichess(cls, game, max_len=None):
         winner = RESULTS[game.headers['Result']]
         white_elo, black_elo = map(
             lambda x: int(game.headers[x]),
@@ -49,7 +52,7 @@ class CompressedGame:
                 truncated = True
                 break
 
-            turn = int(state.turn())
+            turn = int(state.parent.turn())
             last_clock = clocks[turn]
             clock = state.clock()
             clock = int(clock) if clock is not None else last_clock
@@ -61,24 +64,23 @@ class CompressedGame:
             moves.append(action)
 
         return cls(
-            moves=np.asarray(moves, dtype=np.uint16),
-            times=np.asarray(times, dtype=np.uint16),
-            meta=np.asarray([
-                -1, # game start idx (if part of a chunk)
-                -1, # game end idx
+            moves=moves,
+            times=times,
+            meta=[
                 winner,
                 white_elo,
                 black_elo,
                 tc_base,
                 tc_inc,
                 int(truncated),
-            ], dtype=np.int32),
+            ],
         )
 
-    def set_start_end_idxs(s, start, end):
-        s.meta[0] = start
-        s.meta[1] = end
-
     def decompress(s):
-        # return Game(s.meta, s.moves, s.times)
-        raise NotImplementedError('TODO')
+        game = chess.pgn.Game()
+        node = game
+        for action in s.moves:
+            player = 1 if node.turn() else -1
+            move = action_to_move(action, player, node.board())
+            node = node.add_variation(move)
+        return game

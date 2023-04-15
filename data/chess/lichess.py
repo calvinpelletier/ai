@@ -9,13 +9,10 @@ from ai.data.chess.compress import CompressedGame
 
 
 # zstdcat lichess_db.pgn.zst | python lichess.py ...
-
-
 def compress_lichess_data(
     output_path,
     input_path=None,
     n_games=None,
-    include_times=True,
     valid_terminations=['Normal', 'Abandoned'],
     min_time_control=180,
     max_time_control=60 * 30,
@@ -54,7 +51,7 @@ def compress_lichess_data(
             continue
 
         # compress game and add to chunk
-        writer.add(CompressedGame.from_lichess_game(
+        writer.add(CompressedGame.from_lichess(
             game,
             max_game_len if truncate else None,
         ))

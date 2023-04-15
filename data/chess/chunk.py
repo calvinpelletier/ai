@@ -1,11 +1,53 @@
 import numpy as np
+from shutil import rmtree
+
+from ai.data.chess.compress import CompressedGame
+
+
+class GameChunkWriter:
+    def __init__(s, output_dir, chunk_size):
+        if output_dir.exists():
+            rmtree(output_dir)
+        output_dir.mkdir(parents=True)
+        s._output_dir = output_dir
+
+        s._chunk_size = chunk_size
+        s._cur_id = 0
+        s._games = []
+        s._moves = []
+        s._times = []
+
+    def add(s, compressed):
+        start = len(s._moves)
+        s._moves.extend(compressed.moves)
+        s._times.extend(compressed.times)
+        end = len(s._moves)
+        s._games.append([start, end] + compressed.meta)
+
+        if len(s._games) >= s._chunk_size:
+            s.flush()
+
+    def flush(s):
+        if not len(s._games):
+            return
+
+        GameChunk(
+            np.asarray(s._games, dtype=np.int32),
+            np.asarray(s._moves, dtype=np.uint16),
+            np.asarray(s._times, dtype=np.uint16),
+        ).write(s._output_dir / str(s._cur_id))
+
+        s._cur_id += 1
+        s._games = []
+        s._moves = []
+        s._times = []
 
 
 class GameChunk:
     def __init__(s, games, moves, times):
-        s._games = games
-        s._moves = moves
-        s._times = times
+        s.games = games
+        s.moves = moves
+        s.times = times
 
     @classmethod
     def from_dir(cls, dir):
@@ -15,58 +57,13 @@ class GameChunk:
             times=np.load(dir / 'times.npy'),
         )
 
-    def add(s, game):
-        start = s._moves.shape[0]
-
-        s._moves = np.concatenate((s._moves, game.moves))
-        s._times = np.concatenate((s._times, game.times))
-
-        end = s._moves.shape[0]
-        game.set_start_end_idxs(start, end)
-        s._games = np.append(
-            s._games,
-            np.expand_dims(game.meta, axis=0),
-            axis=0,
-        )
-
-    def n_moves(s):
-        return s._moves.shape[0]
-
-    def n_games(s):
-        return s._games.shape[0]
+    def __getitem__(s, idx):
+        game = s.games[idx]
+        start, end, meta = game[0], game[1], game[2:]
+        return CompressedGame(s.moves[start:end], s.times[start:end], meta)
 
     def write(s, dir):
-        os.makedirs(dir, exist_ok=True)
-        np.save(dir / 'games.npy', s._games)
-        np.save(dir / 'moves.npy', s._moves)
-        np.save(dir / 'times.npy', s._times)
-
-
-class GameChunkWriter:
-    def __init__(s, output_dir, min_chunk_size):
-        output_dir.mkdir(parents=True, exist_ok=True)
-        s._output_dir = output_dir
-        s._min_chunk_size = min_chunk_size
-        s._cur_chunk = None
-        s._cur_id = 0
-
-    def add(s, game):
-        if s._cur_chunk is None:
-            game.set_start_end_idxs(0, game.moves.shape[0])
-            s._cur_chunk = GameChunk(
-                games=np.expand_dims(game.meta, axis=0),
-                moves=np.copy(game.moves),
-                times=np.copy(game.times),
-            )
-        else:
-            s._cur_chunk.add(game)
-
-        if s._cur_chunk.n_moves() >= s._min_chunk_size:
-            s.flush()
-
-    def flush(s):
-        if not s._cur_chunk.n_moves():
-            return
-        s._cur_chunk.write(s._output_dir / f'{s._cur_id:03d}')
-        s._cur_chunk = None
-        s._cur_id += 1
+        dir.mkdir(exist_ok=True)
+        np.save(dir / 'games.npy', s.games)
+        np.save(dir / 'moves.npy', s.moves)
+        np.save(dir / 'times.npy', s.times)
