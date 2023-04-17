@@ -3,6 +3,7 @@ import torch.utils.data as torch_data
 from torchvision import datasets, transforms
 from pathlib import Path
 import numpy as np
+from typing import Callable, Optional
 
 from ai.data.dataset import Dataset
 from ai.util.path import dataset_path, PathLike
@@ -14,7 +15,12 @@ CLASSES = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse',
     'ship', 'truck')
 
 
-def cifar10(path: PathLike = 'cifar10'):
+def cifar10(
+    path: PathLike = 'cifar10',
+    include_labels: bool = True,
+    img_postprocessor: Callable = normalize,
+    label_postprocessor: Optional[Callable] = None,
+):
     '''CIFAR10 object classification dataset.
 
     DATA (n=60_000)
@@ -31,6 +37,12 @@ def cifar10(path: PathLike = 'cifar10'):
                 relative path from AI_DATASETS_PATH environment variable
             NOTE: if the data doesn't exist, it will be downloaded and
             converted.
+        include_labels
+            include labels (key: 'y') in dataset
+        img_postprocessor
+            postprocess function called on images
+        label_postprocessor
+            postprocess function called on labels
     '''
 
     path = dataset_path(path)
@@ -40,9 +52,18 @@ def cifar10(path: PathLike = 'cifar10'):
     if not path.exists():
         _download_and_convert(path)
 
+    data = np.load(path)
+    if include_labels:
+        postprocess = {'x': img_postprocessor}
+        if label_postprocessor is not None:
+            postprocess['y'] = label_postprocessor
+    else:
+        postprocess = img_postprocessor
+        data = data['x']
+
     return Dataset(
-        np.load(path),
-        postprocess={'x': normalize}, # type: ignore
+        data,
+        postprocess=postprocess, # type: ignore
         default_split=[50_000, 10_000],
     )
 
