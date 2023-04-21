@@ -1,6 +1,7 @@
 from __future__ import annotations
 import torch
 from typing import Optional
+import math
 
 from ai.model.param import param_init
 from ai.util.path import PathLike
@@ -73,6 +74,13 @@ class Model(torch.nn.Module):
 
     def get_device(s) -> torch.device:
         return next(s.parameters()).device
+
+    @property
+    def n_params(s) -> int:
+        n = 0
+        for p in s.parameters():
+            n += math.prod(list(p.size()))
+        return n
 
 
 # aliases

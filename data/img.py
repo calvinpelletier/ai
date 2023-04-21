@@ -1,3 +1,5 @@
+from typing import Optional, Callable
+
 from ai.util.path import dataset_path, PathLike
 from ai.util import img as img_util
 from ai.data.dataset import Dataset
@@ -11,7 +13,12 @@ class ImgDataset(Dataset):
         <path>/<imsize>/metadata/* (e.g. for caching FID info)
     '''
 
-    def __init__(s, path: PathLike, imsize: int):
+    def __init__(s,
+        path: PathLike,
+        imsize: int,
+        preprocess: Optional[Callable] = img_util.read,
+        postprocess: Optional[Callable] = img_util.normalize,
+    ):
         '''
         path : str or Path
             if path starts with "/":
@@ -21,6 +28,19 @@ class ImgDataset(Dataset):
         imsize : int
             target image size (if <path>/<imsize> doesnt exist, it will be
             created by resizing an existing image size)
+        preprocess : callable or null
+            a function used by data workers (e.g. read image from disk)
+            args:
+                an item from <data>
+            returns:
+                tensor/ndarray or dict of tensor/ndarray
+        postprocess : callable or null
+            a function called after the data has been transfered to the device
+            (e.g. normalize an image tensor)
+            args:
+                tensor or dict of tensors
+            returns:
+                tensor or dict of tensors
         '''
 
         # parse path to dataset
@@ -43,8 +63,8 @@ class ImgDataset(Dataset):
         # create dataset
         super().__init__(
             sorted(list((dir / 'data').iterdir())),
-            img_util.read,
-            img_util.normalize,
+            preprocess,
+            postprocess,
         )
 
         s.metadata_path = dir / 'metadata' # e.g. FID stats

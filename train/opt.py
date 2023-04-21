@@ -61,3 +61,8 @@ def build(cfg, model):
     del cfg_dict['type']
 
     return opt_cls(model, **cfg_dict)
+
+def from_name(name, model, **kw):
+    if name not in OPTS:
+        raise ValueError(f'unknown opt: {name}')
+    return OPTS[name](model, **kw)

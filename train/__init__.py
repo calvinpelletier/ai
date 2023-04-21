@@ -7,6 +7,7 @@ from ai.train.env import (
     Gan,
     Reconstruct,
     RL,
+    Target,
 )
 from ai.train.hook import Hook
 from ai.train.trainer import Trainer, MultiTrainer

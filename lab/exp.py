@@ -30,12 +30,18 @@ class Experiment(LabEntity):
             pruner=SuccessiveHalvingPruner() if prune else None,
         )
 
+        s._prune = prune
+
+    @property
+    def trial_data(s):
+        return s._exp.trials
+
     @property
     def best_hparams(s):
         return s._exp.best_params
 
     def run(s, n, fn):
-        print(f'RUNNING EXPERIMENT {s.path} (n={n})\n')
+        print(f'\nRUNNING EXPERIMENT {s.path} (n={n})\n')
         s._exp.optimize(partial(s._run, fn), n_trials=n)
 
     def show_plot(s, hparam, show_pruned=False, only_best=None):
@@ -57,21 +63,27 @@ class Experiment(LabEntity):
     def _run(s, fn, optuna_trial):
         id = str(optuna_trial.number)
         print_header(f'TRIAL {id}')
-        trial = _ExpTrial(s.path / f'trials/{id}', optuna_trial, **s._trial_kw)
+        trial = _ExpTrial(
+            s.path / f'trials/{id}',
+            optuna_trial,
+            s._prune,
+            **s._trial_kw,
+        )
         result = fn(trial)
         print(f'RESULT: {result:.4f}\n')
         return result
 
 
 class _ExpTrial(Trial):
-    def __init__(s, path, optuna_trial, **kw):
+    def __init__(s, path, optuna_trial, prune, **kw):
         super().__init__(path, val_stopper=s.pruner, **kw)
         s._optuna_trial = optuna_trial
+        s._prune = prune
         s.hp = _HyperParams(optuna_trial)
 
     def pruner(s, step, val_loss):
         s._optuna_trial.report(val_loss, step)
-        if s._optuna_trial.should_prune():
+        if s._prune and s._optuna_trial.should_prune():
             print_header('')
             print('PRUNED\n')
             raise optuna.TrialPruned()

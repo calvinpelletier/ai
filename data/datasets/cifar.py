@@ -3,7 +3,7 @@ import torch.utils.data as torch_data
 from torchvision import datasets, transforms
 from pathlib import Path
 import numpy as np
-from typing import Callable, Optional
+from typing import Callable, Optional, Union, Dict
 
 from ai.data.dataset import Dataset
 from ai.util.path import dataset_path, PathLike
@@ -18,8 +18,8 @@ CLASSES = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse',
 def cifar10(
     path: PathLike = 'cifar10',
     include_labels: bool = True,
-    img_postprocessor: Callable = normalize,
-    label_postprocessor: Optional[Callable] = None,
+    preprocess: Optional[Union[Callable, Dict[str, Callable]]] = None,
+    postprocess: Union[Callable, Dict[str, Callable]] = {'x': normalize},
 ):
     '''CIFAR10 object classification dataset.
 
@@ -51,18 +51,11 @@ def cifar10(
     path = path / 'data.npz'
     if not path.exists():
         _download_and_convert(path)
-
     data = np.load(path)
-    if include_labels:
-        postprocess = {'x': img_postprocessor}
-        if label_postprocessor is not None:
-            postprocess['y'] = label_postprocessor
-    else:
-        postprocess = img_postprocessor
-        data = data['x']
 
     return Dataset(
-        data,
+        data if include_labels else data['x'],
+        preprocess=preprocess, # type: ignore
         postprocess=postprocess, # type: ignore
         default_split=[50_000, 10_000],
     )

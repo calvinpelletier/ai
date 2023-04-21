@@ -120,6 +120,7 @@ class Dataset:
         n_workers: int = 1,
         train: bool = False,
         drop_last: bool = True,
+        single_batch: bool = False,
     ) -> Iterable:
         '''Create a data iterator for this dataset.
 
@@ -132,6 +133,8 @@ class Dataset:
                 shuffle and loop infinitely if true
             drop_last: bool
                 drop last batch if incomplete
+            single_batch: bool
+                (debugging) process a single batch then continuously yield it
         '''
 
         return create_data_iterator(
@@ -143,6 +146,7 @@ class Dataset:
             drop_last=drop_last,
             n_workers=n_workers,
             postprocess=s._postprocess,
+            single_batch=single_batch,
         )
 
     def _create_subdataset(s, x, y):

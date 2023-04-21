@@ -14,6 +14,7 @@ def create_data_iterator(
     drop_last: bool = True,
     n_workers: int = 1,
     postprocess: Optional[Callable] = None,
+    single_batch: bool = False,
 ):
     '''Create a data loader and wrap it in an iterator.
 
@@ -36,6 +37,8 @@ def create_data_iterator(
                 tensor or dict of tensors
             returns:
                 tensor or dict of tensors
+        single_batch : bool
+            (debugging) process a single batch then continuously yield it
     '''
 
     loader_kwargs = {
@@ -53,7 +56,7 @@ def create_data_iterator(
         raise ValueError(f'unexpected device: {device}')
 
     loader = torch_data.DataLoader(data, **loader_kwargs)
-    return DataIterator(loader, device, infinite, postprocess)
+    return DataIterator(loader, device, infinite, postprocess, single_batch)
 
 
 class DataIterator:
@@ -62,13 +65,27 @@ class DataIterator:
         device: Union[torch.device, str],
         infinite: bool = False,
         postprocessor: Optional[Callable] = None,
+        single_batch: bool = False,
     ):
         s._loader = loader
         s._device = device
         s._infinite = infinite
         s._postprocessor = postprocessor
 
+        s._single_batch = None
+        if single_batch:
+            s._single_batch = next(iter(s))
+
     def __iter__(s):
+        if s._single_batch is not None:
+            return _single_batch_iter(s._single_batch, s._infinite)
+
         if s._infinite:
             return inf_data_iter(s._loader, s._device, s._postprocessor)
         return data_iter(s._loader, s._device, s._postprocessor)
+
+def _single_batch_iter(batch, infinite):
+    if infinite:
+        while 1:
+            yield batch
+    yield batch

@@ -64,11 +64,11 @@ class _Base:
 
         # run training
         return s._train(
-            model, 
-            opt, 
-            hook, 
-            step, 
-            Timer(timelimit), 
+            model,
+            opt,
+            hook,
+            step,
+            Timer(timelimit),
             math.inf if steplimit is None else step + steplimit,
         )
 

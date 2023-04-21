@@ -5,3 +5,4 @@ from ai.train.env.diffusion import Diffusion
 from ai.train.env.gan import Gan
 from ai.train.env.reconstruct import Reconstruct
 from ai.train.env.rl import RL
+from ai.train.env.target import Target

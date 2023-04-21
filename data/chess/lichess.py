@@ -19,7 +19,7 @@ def compress_lichess_data(
     min_game_len=4,
     max_game_len=128,
     truncate=True,
-    chunk_size=1_000_000,
+    chunk_size=100_000,
 ):
     writer = GameChunkWriter(Path(output_path), chunk_size)
 

@@ -20,16 +20,33 @@ def unnormalize(tensor):
     return ((tensor + 1) * 127.5).clamp(0, 255).to(torch.uint8)
 
 
-def to_pil(tensor):
+def to_pil(tensor, normalized=True):
     if len(tensor.shape) == 4:
-        return [_to_pil(x) for x in tensor]
+        return [_to_pil(x, normalized) for x in tensor]
     assert len(tensor.shape) == 3
-    return _to_pil(tensor)
+    return _to_pil(tensor, normalized)
 
-def _to_pil(tensor):
-    assert tensor.shape[0] == 3, 'TODO: non-RGB imgs'
-    tensor = unnormalize(tensor).cpu().numpy()
-    return Image.fromarray(np.transpose(tensor, (1, 2, 0)), 'RGB')
+def _to_pil(tensor, normalized):
+    if normalized:
+        tensor = unnormalize(tensor)
+    else:
+        tensor = tensor.clamp(0, 255).to(torch.uint8)
+
+    # RGB
+    if tensor.shape[0] == 3:
+        return Image.fromarray(
+            np.transpose(tensor.cpu().numpy(), (1, 2, 0)),
+            'RGB',
+        )
+
+    # greyscale
+    if tensor.shape[0] == 1:
+        return Image.fromarray(
+            tensor.squeeze().cpu().numpy(),
+            'L',
+        ).convert('RGB')
+
+    raise ValueError(f'channel size not handled: {tensor.shape[0]}')
 
 
 def resize(tensor, size, mode='bilinear', align_corners=True):
@@ -53,7 +70,7 @@ def resize_dir(src, dest, imsize):
         im.save(dest / path.name, 'PNG')
 
 
-def create_img_grid(tensors):
+def create_img_grid(tensors, normalized=True):
     nx = len(tensors)
     ny = len(tensors[0])
     c, h, w = tensors[0][0].shape
@@ -67,9 +84,9 @@ def create_img_grid(tensors):
 
     for x, col in enumerate(tensors):
         for y, tensor in enumerate(col):
-            canvas.paste(to_pil(tensor), (w * x, h * y)) # type: ignore
+            canvas.paste(to_pil(tensor, normalized), (w * x, h * y)) # type: ignore
 
     return canvas
 
-def save_img_grid(path, tensors):
-    create_img_grid(tensors).save(path)
+def save_img_grid(path, tensors, normalized=True):
+    create_img_grid(tensors, normalized).save(path)

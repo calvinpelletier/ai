@@ -32,6 +32,11 @@ def process_data(data, fn):
         assert isinstance(data, dict)
         for k in fn.keys():
             data[k] = fn[k](data[k])
-    elif fn is not None:
-        data = fn(data)
+        return data
+
+    if fn is not None:
+        if isinstance(data, dict):
+            return {k: fn(v) for k, v in data.items()}
+        return fn(data)
+
     return data
