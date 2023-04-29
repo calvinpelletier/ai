@@ -2,7 +2,7 @@ import chess
 
 from ai.game.chess.action_map import RelActionMap
 from ai.game.chess.util import move_to_coords, coords_to_move
-from ai.game.chess.constants import BOARD_AREA, BOARD_W
+from ai.game.chess.board import BOARD_AREA, BOARD_W
 
 
 REL_ACTION_MAP = RelActionMap()

@@ -13,7 +13,7 @@ CHUNK_SIZE = 4
 
 def test_lichess_compressor():
     pgns = []
-    with open(TEST_DATA / 'lichess_medium.pgn', 'rb') as f:
+    with open(TEST_DATA / 'lichess_medium.pgn', 'r') as f:
         for pgn in pgn_splitter(f):
             pgns.append(pgn)
 
@@ -52,10 +52,10 @@ def test_lichess_filter():
         TEST_DATA / 'lichess_medium.pgn',
         chunk_size=CHUNK_SIZE,
     )
-    assert counts['min game len'] == 4
-    assert counts['time control'] == 9
-    assert counts['termination'] == 14
-    assert counts['valid'] == 23
+    assert counts['min game len'] == 5
+    assert counts['time control'] == 19
+    assert counts['termination'] == 0
+    assert counts['valid'] == 26
     assert counts['total'] == 50
 
 
@@ -67,6 +67,7 @@ def test_underpromo_compress():
     a.headers['WhiteElo'] = '1234'
     a.headers['BlackElo'] = '2468'
     a.headers['TimeControl'] = '60+0'
+    a.headers['Termination'] = 'Normal'
 
     compressed = CompressedGame.from_lichess(a)
     b = compressed.decompress()

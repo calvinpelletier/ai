@@ -4,37 +4,16 @@ import io
 
 
 GAME_SEPARATOR = '[Event "'
-READ_SIZE = 4096
 
 
 def pgn_splitter(f):
-    buffer = ''
-    bad_chunk = False
-    while True:
-        chunk = f.read(READ_SIZE)
-
-        if not chunk:
-            yield GAME_SEPARATOR + buffer
-            break
-
-        try:
-            chunk = chunk.decode('utf-8')
-        except Exception as e:
-            print(f'[WARNING] bad chunk: {e}')
-            bad_chunk = True
-            buffer = ''
-            continue
-
-        buffer += chunk
-        while True:
-            try:
-                part, buffer = buffer.split(GAME_SEPARATOR, 1)
-            except ValueError:
-                break
-            if bad_chunk:
-                bad_chunk = False
-            elif part:
-                yield GAME_SEPARATOR + part
+    lines = []
+    for line in f:
+        if line.startswith(GAME_SEPARATOR) and lines:
+            yield ''.join(lines)
+            lines = []
+        lines.append(line)
+    yield ''.join(lines)
 
 
 def pgn_to_game(pgn):

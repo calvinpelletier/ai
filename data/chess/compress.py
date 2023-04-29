@@ -11,6 +11,12 @@ RESULTS = {
     '1/2-1/2': 0,
 }
 
+TERMINATIONS = {
+    'Normal': 0,
+    'Abandoned': 1,
+    'Time forfeit': 2,
+}
+
 
 class CompressedGame:
     def __init__(s, moves, times, meta):
@@ -39,6 +45,7 @@ class CompressedGame:
             lambda x: int(x),
             game.headers['TimeControl'].split('+'),
         )
+        termination = TERMINATIONS[game.headers['Termination']]
 
         moves = []
         times = []
@@ -72,6 +79,7 @@ class CompressedGame:
                 black_elo,
                 tc_base,
                 tc_inc,
+                termination,
                 int(truncated),
             ],
         )

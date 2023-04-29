@@ -13,10 +13,10 @@ def compress_lichess_data(
     output_path,
     input_path=None,
     n_games=None,
-    valid_terminations=['Normal', 'Abandoned'],
+    valid_terminations=['Normal', 'Abandoned', 'Time forfeit'],
     min_time_control=180,
     max_time_control=60 * 30,
-    min_game_len=4,
+    min_game_len=6,
     max_game_len=128,
     truncate=True,
     chunk_size=100_000,
@@ -31,10 +31,13 @@ def compress_lichess_data(
         max_game_len if not truncate else float('inf'),
     )
 
-    f = sys.stdin.buffer if input_path is None else open(input_path, 'rb')
+    f = sys.stdin if input_path is None else open(input_path, 'r')
 
     counts = defaultdict(int)
     for pgn in pgn_splitter(f):
+        if n_games is not None and counts['total'] >= n_games:
+            break
+
         counts['total'] += 1
 
         # convert pgn to game
@@ -60,15 +63,12 @@ def compress_lichess_data(
 
     writer.flush()
 
-    for k, v in sorted(counts.items(), key=lambda x: x[1]):
-        print(f'{k}: {v}')
-
     return counts
 
 
 class Filter:
     def __init__(s,
-        valid_terminations=['Normal', 'Abandoned'],
+        valid_terminations=['Normal', 'Abandoned', 'Time forfeit'],
         min_time_control=180,
         max_time_control=60 * 30,
         min_game_len=4,
@@ -81,6 +81,9 @@ class Filter:
         s._max_game_len = max_game_len
 
     def __call__(s, game):
+        if game.headers['Result'] == '*':
+            return 'no result'
+
         if game.headers['Termination'] not in s._valid_terminations:
             return 'termination'
 

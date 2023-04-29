@@ -8,7 +8,7 @@ TEST_DATA = Path(__file__).parent / 'data'
 
 
 def test_pgn_splitter():
-    with open(TEST_DATA / 'lichess_small.pgn', 'rb') as f:
+    with open(TEST_DATA / 'lichess_small.pgn', 'r') as f:
         _assert_pgns([pgn for pgn in pgn_splitter(f)])
 
 
@@ -19,6 +19,10 @@ def _assert_pgns(pgns):
             gts.append(f.read())
 
     for pgn, gt in zip(pgns, gts):
+        print('\na\n')
+        print(pgn)
+        print('\nb\n')
+        print(gt)
         assert pgn.rstrip('\n') == gt.rstrip('\n')
 
     for pgn in pgns:
@@ -26,4 +30,4 @@ def _assert_pgns(pgns):
 
 
 if __name__ == '__main__':
-    _assert_pgns([pgn for pgn in pgn_splitter(sys.stdin.buffer)])
+    _assert_pgns([pgn for pgn in pgn_splitter(sys.stdin)])

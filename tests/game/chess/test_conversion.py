@@ -3,7 +3,7 @@ import sys
 
 from ai.data.chess.pgn import pgn_splitter, pgn_to_game
 from ai.game.chess.action import move_to_action, action_to_move
-from ai.game.chess.board import state_to_board, board_to_state
+from ai.game.chess.board import neural_to_board, board_to_neural
 from ai.game.chess.util import eq_boards
 
 
@@ -14,7 +14,7 @@ def test_move_action_conversion():
     pgns = []
     with open(TEST_DATA / 'underpromo.pgn', 'r') as f:
         pgns.append(f.read())
-    with open(TEST_DATA / 'lichess_medium.pgn', 'rb') as f:
+    with open(TEST_DATA / 'lichess_medium.pgn', 'r') as f:
         for pgn in pgn_splitter(f):
             pgns.append(pgn)
 
@@ -33,7 +33,7 @@ def test_move_action_conversion():
 
 def test_board_state_conversion():
     pgns = []
-    with open(TEST_DATA / 'lichess_medium.pgn', 'rb') as f:
+    with open(TEST_DATA / 'lichess_medium.pgn', 'r') as f:
         for pgn in pgn_splitter(f):
             pgns.append(pgn)
 
@@ -42,8 +42,8 @@ def test_board_state_conversion():
         for position in game.mainline():
             gt_board = position.board()
             player = 1 if position.turn() else -1
-            state = board_to_state(gt_board, player)
-            board = state_to_board(state, player)
+            neural = board_to_neural(gt_board, player)
+            board = neural_to_board(neural, player)
             assert eq_boards(board, gt_board)
 
 
@@ -65,8 +65,8 @@ def test_mirror():
         action2 = move_to_action(b.move, p2)
         assert action1 == action2
 
-        enc1 = board_to_state(a.parent.board(), p1)
-        enc2 = board_to_state(b.parent.board(), p2)
+        enc1 = board_to_neural(a.parent.board(), p1)
+        enc2 = board_to_neural(b.parent.board(), p2)
         assert (enc1 == enc2).all()
 
         a = a.next()
