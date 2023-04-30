@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 from typing import Union
+import einops
 
 
 ALIGN_CORNERS_MODES = ['linear', 'bilinear', 'trilinear', 'bicubic']
@@ -19,10 +20,8 @@ def resample(x: Tensor, scale: Union[int, float], mode: str = 'bilinear'):
     )
 
 
-def flatten(x: Tensor, keep_batch_dim: bool = True):
-    if keep_batch_dim:
-        return torch.flatten(x, 1)
-    return torch.flatten(x)
+def flatten(x: Tensor, start_dim: int = 1):
+    return torch.flatten(x, start_dim)
 
 
 def normalize_2nd_moment(x: Tensor, dim: int = 1, eps: float = 1e-8):
@@ -30,7 +29,7 @@ def normalize_2nd_moment(x: Tensor, dim: int = 1, eps: float = 1e-8):
 
 
 # aliases
-def one_hot(*a, **kw):
-    return F.one_hot(*a, **kw)
-def cat(*a, **kw):
-    return torch.cat(*a, **kw)
+one_hot = F.one_hot
+cat = torch.cat
+rearrange = einops.rearrange
+pack_padded_sequence = torch.nn.utils.rnn.pack_padded_sequence

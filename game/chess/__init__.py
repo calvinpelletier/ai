@@ -12,4 +12,8 @@ from ai.game.chess.board import (
     BOARD_SHAPE,
     board_to_neural,
     neural_to_board,
+    PIECES_PER_SIDE,
+    N_PIECE_VALUES,
+    PIECE_IDX,
+    CASTLE_EP_IDX,
 )

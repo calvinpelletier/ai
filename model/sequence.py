@@ -3,7 +3,7 @@
 from torch import nn
 from torch.nn import Module
 from copy import deepcopy
-from typing import Callable
+from typing import Callable, List
 
 from ai.util import log2_diff
 
@@ -38,7 +38,7 @@ def repeat(n: int, obj: Module) -> Module:
     return nn.Sequential(*objs)
 
 
-class Pyramid(nn.Module):
+class Pyramid(Module):
     '''Sequence of blocks that results in a pyramid of feature maps.
 
     INPUT
@@ -119,3 +119,19 @@ class Pyramid(nn.Module):
 
 def pyramid(*a, **kw) -> Module:
     return Pyramid(*a, **kw)
+
+
+class ModSeq(Module):
+    '''Sequence of moduled blocks.'''
+
+    def __init__(s, blocks: List[Module]):
+        super().__init__()
+        s._blocks = nn.ModuleList(blocks)
+
+    def forward(s, x, z):
+        for block in s._blocks:
+            x = block(x, z)
+        return x
+
+def modseq(*a, **kw) -> Module:
+    return ModSeq(*a, **kw)

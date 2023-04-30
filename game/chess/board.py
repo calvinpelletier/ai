@@ -17,6 +17,9 @@ BOARD_SHAPE = (BOARD_DEPTH, BOARD_H, BOARD_W)
 
 EP_RANKS = [2, 5]
 
+PIECES_PER_SIDE = 6
+N_PIECE_VALUES = 1 + 2 * PIECES_PER_SIDE
+
 
 def board_to_neural(board, player):
     neural = np.zeros(BOARD_SHAPE, dtype=np.int8)

@@ -83,7 +83,12 @@ class Model(torch.nn.Module):
         return n
 
 
-# aliases
-Module = torch.nn.Module
-def modules(x):
-    return torch.nn.ModuleList(x)
+class Module(torch.nn.Module):
+    def __init__(s, net=None):
+        super().__init__()
+        if net is not None:
+            s._net = net
+
+    # NOTE: need to implement forward method if net not given to constructor
+    def forward(s, *a, **kw):
+        s._net(*a, **kw)

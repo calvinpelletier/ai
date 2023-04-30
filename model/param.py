@@ -4,6 +4,10 @@ import torch.nn as nn
 import torch.nn.init as init
 
 
+def param(*shape):
+    return nn.Parameter(torch.randn(*shape))
+
+
 def param_init(obj):
     if hasattr(obj, 'init_params') and callable(obj.init_params):
             obj.init_params()
@@ -68,6 +72,10 @@ def param_init(obj):
                 init.orthogonal_(param.data)
             else:
                 init.normal_(param.data)
+
+    # embedding
+    elif isinstance(obj, nn.Embedding):
+        init.uniform_(obj.weight.data, -1.0, 1.0)
 
     # gru
     elif isinstance(obj, nn.GRU):

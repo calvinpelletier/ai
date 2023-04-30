@@ -3,7 +3,6 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 from typing import Optional, Union, List
-from einops.layers.torch import Rearrange
 
 
 def resample(scale: Union[int, float]):
@@ -85,19 +84,16 @@ class Flatten(nn.Module):
     '''Flatten the input tensor.
 
     ARGS
-        keep_batch_dim : bool
-            if true (default), [bs, ...] to [bs, n]
-            else, [...] to [n]
+        start_dim : int
+            default 1 to preserve batch dim: [bs, ...] to [bs, n]
     '''
 
-    def __init__(s, keep_batch_dim: bool = True):
+    def __init__(s, start_dim: int = 1):
         super().__init__()
-        s._keep_batch_dim = keep_batch_dim
+        s._start_dim = start_dim
 
     def forward(s, x):
-        if s._keep_batch_dim:
-            return torch.flatten(x, 1)
-        return torch.flatten(x)
+        return torch.flatten(x, s._start_dim)
 
 def flatten(*a, **kw):
     return Flatten(*a, **kw)
@@ -143,7 +139,3 @@ class Gain(nn.Module):
 
 def gain(*a, **kw):
     return Gain(*a, **kw)
-
-
-# alias
-rearrange = Rearrange

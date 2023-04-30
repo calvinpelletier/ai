@@ -20,11 +20,11 @@ class Trial(LabEntity):
         save_interval: ScheduleConfig = Logarithmic(1024, 65536),
 
         val_data: Optional[Iterable] = None,
-        val_interval: ScheduleConfig = Logarithmic(128, 4096),
+        val_interval: ScheduleConfig = Logarithmic(256, 8192),
         val_stopper: Optional[Callable] = None,
 
         sampler: Optional[Callable] = None,
-        sample_interval: ScheduleConfig = Logarithmic(128, 65536),
+        sample_interval: ScheduleConfig = Logarithmic(256, 65536),
 
         task: Optional[Callable] = None,
         task_interval: ScheduleConfig = Logarithmic(1024, 65536),
