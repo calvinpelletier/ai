@@ -91,4 +91,4 @@ class Module(torch.nn.Module):
 
     # NOTE: need to implement forward method if net not given to constructor
     def forward(s, *a, **kw):
-        s._net(*a, **kw)
+        return s._net(*a, **kw)

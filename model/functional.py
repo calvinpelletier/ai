@@ -28,8 +28,17 @@ def normalize_2nd_moment(x: Tensor, dim: int = 1, eps: float = 1e-8):
     return x * (x.square().mean(dim=dim, keepdim=True) + eps).rsqrt()
 
 
+def pack_padded_sequence(data, lengths, batch_first=True, enforce_sorted=False):
+    return torch.nn.utils.rnn.pack_padded_sequence(
+        data,
+        lengths.cpu(),
+        batch_first=batch_first,
+        enforce_sorted=enforce_sorted,
+    )
+
+
 # aliases
 one_hot = F.one_hot
 cat = torch.cat
 rearrange = einops.rearrange
-pack_padded_sequence = torch.nn.utils.rnn.pack_padded_sequence
+repeat = einops.repeat

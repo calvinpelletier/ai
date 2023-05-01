@@ -270,3 +270,25 @@ class WeightModConv(nn.Module):
 
         # noise, actv, clamp
         return s._post(x)
+
+
+class ModResBlock(nn.Module):
+    def __init__(s,
+        nc1: int,
+        nc2: int,
+        z_dim: int,
+        modtype: str = 'adalin',
+        **kw,
+    ):
+        super().__init__()
+        s._conv1 = modconv(nc1, nc2, z_dim, modtype, **kw)
+        s._conv2 = modconv(nc1, nc2, z_dim, modtype, **kw)
+
+    def forward(s, x, z):
+        res = x
+        x = s._conv1(x, z)
+        x = s._conv2(x, z)
+        return x + res
+
+def modresblk(*a, **kw):
+    return ModResBlock(*a, **kw)

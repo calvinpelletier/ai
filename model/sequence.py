@@ -16,7 +16,7 @@ def seq(*a) -> Module:
     return nn.Sequential(*a)
 
 
-def repeat(n: int, obj: Module) -> Module:
+def repeat(n: int, obj: Module, modulated: bool = False) -> Module:
     '''Sequence of <obj> deepcopied <n> times.
 
     NOTE: if repeating a custom module with params manually initialized in the
@@ -35,6 +35,8 @@ def repeat(n: int, obj: Module) -> Module:
     while len(objs) < n:
         objs.append(deepcopy(obj))
 
+    if modulated:
+        return ModSeq(*objs)
     return nn.Sequential(*objs)
 
 
@@ -122,9 +124,9 @@ def pyramid(*a, **kw) -> Module:
 
 
 class ModSeq(Module):
-    '''Sequence of moduled blocks.'''
+    '''Sequence of modulated blocks.'''
 
-    def __init__(s, blocks: List[Module]):
+    def __init__(s, *blocks):
         super().__init__()
         s._blocks = nn.ModuleList(blocks)
 

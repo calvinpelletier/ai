@@ -7,7 +7,8 @@ from ai.game.chess.board import BOARD_AREA, BOARD_W
 
 REL_ACTION_MAP = RelActionMap()
 REL_ACTION_SIZE = len(REL_ACTION_MAP)
-ACTION_SIZE = BOARD_AREA * REL_ACTION_SIZE
+NULL_ACTION = BOARD_AREA * REL_ACTION_SIZE
+ACTION_SIZE = BOARD_AREA * REL_ACTION_SIZE + 1
 
 
 def move_to_action(move, player):
@@ -17,6 +18,7 @@ def move_to_action(move, player):
     return relative_to_absolute_action(x1, y1, rel_action)
 
 def action_to_move(action, player, board):
+    assert action != NULL_ACTION
     x1, y1, rel_action = absolute_to_relative_action(action)
     dx, dy, underpromo = REL_ACTION_MAP.from_action(rel_action)
     x2, y2 = x1 + dx, y1 + dy
