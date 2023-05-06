@@ -10,4 +10,5 @@ from ai.train.env import (
     Target,
 )
 from ai.train.hook import Hook
+from ai.train.stop import EarlyStopper
 from ai.train.trainer import Trainer, MultiTrainer

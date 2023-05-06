@@ -12,12 +12,18 @@ class Target(Env):
     Calculates the difference (default: MSE) between model(x) and y.
     '''
 
-    def __init__(s, loss_fn: Callable = torch.nn.MSELoss()):
+    def __init__(s,
+        loss_fn: Callable = torch.nn.MSELoss(),
+        x_key: str = 'x',
+        y_key: str = 'y',
+    ):
         s.loss_fn = loss_fn
+        s.x = x_key
+        s.y = y_key
 
     def __call__(s,
         model: Model,
         data: Dict[str, Tensor],
         step: int = 0,
     ) -> Tensor:
-        return s.loss_fn(model(data['x']), data['y'])
+        return s.loss_fn(model(data[s.x]), data[s.y])
