@@ -3,6 +3,7 @@ from ai.util.debug import print_info, print_header
 from ai.util.etc import (
     log2_diff,
     no_op,
+    gen_id,
     gen_uuid,
     softmax,
     softmax_sample_idx,

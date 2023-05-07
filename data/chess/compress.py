@@ -19,8 +19,8 @@ TERMINATIONS = {
 
 
 class CompressedGame:
-    def __init__(s, moves, times, meta):
-        s.moves = moves
+    def __init__(s, actions, times, meta):
+        s.actions = actions
         s.times = times
         s.meta = meta
 
@@ -29,7 +29,7 @@ class CompressedGame:
         game = chunk.games[game_idx]
         start, end, meta = game[0], game[1], game[2:]
         return cls(
-            moves=chunk.moves[start:end],
+            actions=chunk.actions[start:end],
             times=chunk.times[start:end],
             meta=meta,
         )
@@ -47,7 +47,7 @@ class CompressedGame:
         )
         termination = TERMINATIONS[game.headers['Termination']]
 
-        moves = []
+        actions = []
         times = []
         truncated = False
         clocks = [None, None]
@@ -68,10 +68,10 @@ class CompressedGame:
             clocks[turn] = clock
 
             action = move_to_action(state.move, 1 if turn else -1)
-            moves.append(action)
+            actions.append(action)
 
         return cls(
-            moves=moves,
+            actions=actions,
             times=times,
             meta=[
                 winner,
@@ -87,7 +87,7 @@ class CompressedGame:
     def decompress(s):
         game = chess.pgn.Game()
         node = game
-        for action in s.moves:
+        for action in s.actions:
             player = 1 if node.turn() else -1
             move = action_to_move(action, player, node.board())
             node = node.add_variation(move)

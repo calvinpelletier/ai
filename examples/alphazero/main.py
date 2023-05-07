@@ -4,11 +4,6 @@ import ai
 from ai.examples.alphazero import AlphaZeroMLP
 
 
-class ExampleConfig(ai.Config):
-    def __init__(s, override={}):
-        super().__init__(Path(__file__).parent / 'config.yaml', override)
-
-
 def run(cfg, game, model):
     model.init().train().to(cfg.device)
     player = ai.game.MctsPlayer(cfg.player, game, model)
@@ -29,8 +24,12 @@ def run(cfg, game, model):
     return task()
 
 
+def example_config():
+    return ai.Config.load(Path(__file__).parent / 'config.yaml')
+
+
 if __name__ == '__main__':
-    cfg = ExampleConfig()
+    cfg = example_config()
     game = ai.game.TicTacToe()
     model = AlphaZeroMLP(game)
     run(cfg, game, model)

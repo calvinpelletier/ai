@@ -1,6 +1,8 @@
 import numpy as np
 from uuid import uuid4
 from typing import Optional
+from random import choices
+import string
 
 
 def log2_diff(a, b):
@@ -10,6 +12,9 @@ def log2_diff(a, b):
 def no_op(*a, **kw):
     pass
 
+
+def gen_id(length=4):
+    return ''.join(choices(string.ascii_letters + string.digits, k=length))
 
 def gen_uuid():
     return uuid4().hex

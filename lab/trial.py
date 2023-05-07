@@ -1,6 +1,7 @@
 import torch
 from functools import partial
 from typing import Any, Optional, Iterable, Callable
+import wandb
 
 from ai.util.logger import Tensorboard
 from ai.train.hook import Hook
@@ -12,6 +13,9 @@ class Trial(LabEntity):
     def __init__(s,
         path,
         clean: bool = False,
+
+        config=None,
+        wnb=None,
 
         logger: Any = Tensorboard,
         log_interval: ScheduleConfig = Logarithmic(1, 1024),
@@ -32,10 +36,27 @@ class Trial(LabEntity):
     ):
         super().__init__(path, clean)
 
+        config_path = s.path / 'config.yaml'
+        if config is None:
+            if config_path.exists():
+                s.config = Config.load(config_path)
+            else:
+                s.config = None
+        else:
+            s.config = config
+            s.config._write_yaml_(config_path)
+
+        if wnb is not None:
+            assert config is not None, 'need to set config to use wandb'
+            assert 'config' not in wnb and 'dir' not in wnb
+            wnb['config'] = config._as_flat_dict_()
+            wnb['dir'] = s.path
+            wandb.init(**wnb)
+
         s._hook_kwargs = {}
         if logger is not None:
             s._hook_kwargs['log'] = {
-                'fn': logger(s.path / 'log'),
+                'fn': logger(s.path / 'log', wnb is not None),
                 'interval': log_interval,
             }
         if save_snapshots:

@@ -1,13 +1,13 @@
 # type: ignore
 import ai
 from ai.util.testing import *
-from ai.examples.alphazero import ExampleConfig, AlphaZeroMLP
+from ai.examples.alphazero import example_config, AlphaZeroMLP
 
 
 BS = 8
 
 def test_self_play():
-    cfg = ExampleConfig()
+    cfg = example_config()
     cfg.device = DEVICE
     cfg.batch_size = BS
     cfg.data.n_workers = None

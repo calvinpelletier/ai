@@ -2,7 +2,7 @@ import torch
 
 from ai.game import TicTacToe, CartPole, MctsPlayer
 from ai.game.mcts import MonteCarloTreeSearch
-from ai.examples.alphazero import AlphaZeroMLP, ExampleConfig
+from ai.examples.alphazero import AlphaZeroMLP, example_config
 from ai.examples.muzero import MuZeroMLP
 from ai.task import GameTask
 
@@ -10,7 +10,7 @@ from ai.task import GameTask
 def test_mcts():
     game = TicTacToe()
 
-    cfg = ExampleConfig().player # type: ignore
+    cfg = example_config().player # type: ignore
     cfg.mcts.n_sims = 32
     player = MctsPlayer(cfg, game, _Model())  # type: ignore
 
@@ -20,7 +20,7 @@ def test_mcts():
 
 
 def test_alphazero_tictactoe_mcts():
-    cfg = ExampleConfig().player # type: ignore
+    cfg = example_config().player # type: ignore
     cfg.mcts.n_sims = 8
 
     game = TicTacToe()
@@ -32,7 +32,7 @@ def test_alphazero_tictactoe_mcts():
 
 
 def test_muzero_tictactoe_mcts():
-    cfg = ExampleConfig().player # type: ignore
+    cfg = example_config().player # type: ignore
     cfg.mcts.modeled_env = True
     cfg.mcts.n_sims = 8
 
@@ -45,7 +45,7 @@ def test_muzero_tictactoe_mcts():
 
 
 def test_muzero_cartpole_mcts():
-    cfg = ExampleConfig().player # type: ignore
+    cfg = example_config().player # type: ignore
     cfg.mcts.modeled_env = True
     cfg.mcts.n_sims = 8
     cfg.mcts.intermediate_rewards = True

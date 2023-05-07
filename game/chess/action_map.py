@@ -59,7 +59,7 @@ class RelActionMap:
     def __len__(s):
         return s._n_actions
 
-    def to_action(s, dx, dy, promotion):
+    def to_action(s, dx, dy, promotion, allow_invalid=False):
         if promotion is None or promotion == chess.QUEEN:
             x, y = dx + s._max_delta, dy + s._max_delta
             action = s._to_action[x][y]
@@ -67,7 +67,10 @@ class RelActionMap:
             assert dx in [-1, 0, 1]
             assert dy == -1
             action = s._to_up_action[promotion][dx + 1]
-        assert action is not None
+
+        if not allow_invalid:
+            assert action is not None
+
         return action
 
     def from_action(s, action):

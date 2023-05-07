@@ -12,7 +12,7 @@ BASE_CONFIG_PATH = Path(__file__).parent / 'config.yaml'
 
 
 def run(outpath, steplimit=5000, **kw):
-    cfg = ai.Config(BASE_CONFIG_PATH, override=kw)
+    cfg = ai.Config.load(BASE_CONFIG_PATH, override=kw)
     print(cfg)
 
     try:

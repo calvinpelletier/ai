@@ -1,7 +1,7 @@
 from ai.model import fm2v, norm
 from ai.model import functional as f
 
-from ai.model.alias import embed, lstm, modules, rearrange
+from ai.model.alias import embed, lstm, modules, rearrange, module_dict, null
 from ai.model.attention import attn, sa, tx_enc, tx_enc_blk
 from ai.model.conv2d import conv
 from ai.model.diffusion import DiffusionModel

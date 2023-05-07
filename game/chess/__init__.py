@@ -3,7 +3,6 @@ from ai.game.chess.action import (
     action_to_move,
     REL_ACTION_SIZE,
     ACTION_SIZE,
-    NULL_ACTION,
 )
 from ai.game.chess.board import (
     BOARD_W,
