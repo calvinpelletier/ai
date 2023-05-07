@@ -166,7 +166,12 @@ class Hook(HookInterface):
     def done(s):
         if s._print:
             print_header(f'DONE (step={s._step})')
+
         s._run_subhooks(True)
+
+        if s._log is not None:
+            s._log['fn'].done()
+
         if s._print:
             print_header('')
 

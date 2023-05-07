@@ -3,6 +3,10 @@ from copy import deepcopy
 from random import choice
 
 
+class _NullValue:
+    pass
+
+
 class Config:
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # CONSTRUCTORS
@@ -27,7 +31,7 @@ class Config:
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # PUBLIC METHODS
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    def __call__(s, key, value):
+    def __call__(s, key, value=_NullValue):
         assert key
         return s._set_(key.split('.'), value)
 
@@ -66,10 +70,19 @@ class Config:
                 setattr(s, k, s._create_subconfig_())
             return getattr(s, k)._set_(key[1:], value)
         else:
-            assert not hasattr(s, k)
-            v = s._parse_value_(value)
-            setattr(s, k, v)
-            return v
+            if value == _NullValue:
+                if hasattr(s, k):
+                    subcfg = getattr(s, k)
+                    assert isinstance(subcfg, Config)
+                else:
+                    subcfg = s._create_subconfig_()
+                    setattr(s, k, subcfg)
+                return subcfg
+            else:
+                assert not hasattr(s, k)
+                v = s._parse_value_(value)
+                setattr(s, k, v)
+                return v
 
     def _as_flat_dict_helper_(s, ret, prefix):
         for k, v in vars(s).items():

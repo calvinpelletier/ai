@@ -18,6 +18,11 @@ class Tensorboard:
                 s._wnb_step = step
             s._wnb_data[key] = value
 
+    def done(s):
+        if s._wnb_data is not None:
+            s._send_wnb()
+            wandb.finish()
+
     def _send_wnb(s):
         if s._wnb_data:
             assert s._wnb_step is not None
