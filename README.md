@@ -45,8 +45,6 @@ Reinforcement learning example: [AlphaZero](examples/alphazero/main.py)
 
 More examples: [ai/examples](examples)
 
-For a WIP example of using `ai` for a large project, see [ai/examples/chess](examples/chess) (I'm currently investigating the ideal architecture for predicting the moves/outcomes of human chess matches).
-
 ## Install
 
 `pip` package coming soon. In the meantime:
