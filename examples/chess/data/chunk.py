@@ -1,7 +1,7 @@
 import numpy as np
 from shutil import rmtree
 
-from ai.data.chess.compress import CompressedGame
+from .compress import CompressedGame
 
 
 class GameChunkWriter:

@@ -3,9 +3,9 @@ from collections import defaultdict
 from pathlib import Path
 import sys
 
-from ai.data.chess.pgn import pgn_to_game, pgn_splitter
-from ai.data.chess.chunk import GameChunkWriter
-from ai.data.chess.compress import CompressedGame
+from .pgn import pgn_to_game, pgn_splitter
+from .chunk import GameChunkWriter
+from .compress import CompressedGame
 
 
 # zstdcat lichess_db.pgn.zst | python lichess.py ...

@@ -3,13 +3,18 @@ import wandb
 
 
 class Tensorboard:
-    def __init__(s, path, wnb=False):
+    def __init__(s, path, wnb=False, ignore_initial_step=True):
         s._writer = SummaryWriter(path)
 
         s._wnb_data = {} if wnb else None
         s._wnb_step = None
 
+        s._ignore_initial_step = ignore_initial_step
+
     def __call__(s, step, key, value):
+        if step == 0 and s._ignore_initial_step:
+            return
+
         s._writer.add_scalar(key, value, step)
 
         if s._wnb_data is not None:
