@@ -15,6 +15,7 @@ def create_data_iterator(
     n_workers: int = 1,
     postprocess: Optional[Callable] = None,
     single_batch: bool = False,
+    non_blocking_transfer: bool = True,
 ):
     '''Create a data loader and wrap it in an iterator.
 
@@ -56,7 +57,8 @@ def create_data_iterator(
         raise ValueError(f'unexpected device: {device}')
 
     loader = torch_data.DataLoader(data, **loader_kwargs)
-    return DataIterator(loader, device, infinite, postprocess, single_batch)
+    return DataIterator(loader, device, infinite, postprocess, single_batch,
+        non_blocking_transfer)
 
 
 class DataIterator:
@@ -66,11 +68,13 @@ class DataIterator:
         infinite: bool = False,
         postprocessor: Optional[Callable] = None,
         single_batch: bool = False,
+        non_blocking_transfer: bool = True,
     ):
         s._loader = loader
         s._device = device
         s._infinite = infinite
         s._postprocessor = postprocessor
+        s._nonblock = non_blocking_transfer
 
         s._single_batch = None
         if single_batch:
@@ -80,9 +84,8 @@ class DataIterator:
         if s._single_batch is not None:
             return _single_batch_iter(s._single_batch, s._infinite)
 
-        if s._infinite:
-            return inf_data_iter(s._loader, s._device, s._postprocessor)
-        return data_iter(s._loader, s._device, s._postprocessor)
+        fn = inf_data_iter if s._infinite else data_iter
+        return fn(s._loader, s._device, s._postprocessor, s._nonblock)
 
 def _single_batch_iter(batch, infinite):
     if infinite:

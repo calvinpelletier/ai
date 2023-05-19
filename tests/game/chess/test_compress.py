@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from ai.data.chess.pgn import pgn_splitter, pgn_to_game
-from ai.data.chess.compress import CompressedGame
-from ai.data.chess.lichess import compress_lichess_data
-from ai.data.chess.chunk import GameChunk
+from ai.examples.chess.data.pgn import pgn_splitter, pgn_to_game
+from ai.examples.chess.data.compress import CompressedGame
+from ai.examples.chess.data.lichess import compress_lichess_data
+from ai.examples.chess.data.chunk import GameChunk
 
 
 TEST_DATA = Path(__file__).parent / 'data'

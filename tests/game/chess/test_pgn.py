@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 
-from ai.data.chess.pgn import pgn_splitter, pgn_to_game
+from ai.examples.chess.data.pgn import pgn_splitter, pgn_to_game
 
 
 TEST_DATA = Path(__file__).parent / 'data'
