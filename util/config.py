@@ -79,10 +79,10 @@ class Config:
                     setattr(s, k, subcfg)
                 return subcfg
             else:
-                assert not hasattr(s, k)
-                v = s._parse_value_(value)
-                setattr(s, k, v)
-                return v
+                if not hasattr(s, k):
+                    value = s._parse_value_(value)
+                    setattr(s, k, value)
+                return value
 
     def _as_flat_dict_helper_(s, ret, prefix):
         for k, v in vars(s).items():
