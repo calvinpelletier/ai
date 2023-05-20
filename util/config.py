@@ -58,6 +58,14 @@ class Config:
     def _write_yaml_(s, path):
         with open(path, 'w') as f:
             yaml.dump(s._as_dict_(), f)
+
+    def __hash__(s):
+        return hash(frozenset(s._as_flat_dict_().items()))
+
+    def __eq__(s, other):
+        if not isinstance(other, Config):
+            return False
+        return s._as_flat_dict_() == other._as_flat_dict_()
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,14 +124,6 @@ class ChooseConfig(Config):
         if isinstance(value, list):
             return choice(value)
         return value
-
-    def __hash__(s):
-        return hash(frozenset(s._as_flat_dict_().items()))
-
-    def __eq__(s, other):
-        if not isinstance(other, Config):
-            return False
-        return s._as_flat_dict_() == other._as_flat_dict_()
 
 
 def _override(default, override):

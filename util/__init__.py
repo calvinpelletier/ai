@@ -11,6 +11,7 @@ from ai.util.etc import (
 )
 from ai.util.img import create_img_grid, save_img_grid
 from ai.util.lr import analyze_lr
+from ai.util.path import dataset_path, model_path, lab_path
 from ai.util.testing import (
     assert_equal,
     assert_shape,

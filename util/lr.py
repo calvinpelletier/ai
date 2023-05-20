@@ -10,10 +10,10 @@ class Analysis:
         s.rates = rates
         s.losses = losses
 
-    def suggest(s, skip_start=0, skip_end=4):
+    def suggest(s, skip_start=0, skip_end=0):
         return s._get_suggestion(*s._trim(skip_start, skip_end))
 
-    def plot(s, skip_start=0, skip_end=4, show=True, save=None):
+    def plot(s, skip_start=0, skip_end=0, show=True, save=None):
         assert skip_start >= 0 and skip_end >= 0
         rates, losses = s._trim(skip_start, skip_end)
 
@@ -49,7 +49,7 @@ def analyze_lr(
     max_lr=10,
     n_steps=100,
     smooth_f=0.05,
-    diverge_th=5,
+    diverge_th=1.25,
 ):
     assert not _has_scheduler(opt)
     assert 0 <= smooth_f < 1
