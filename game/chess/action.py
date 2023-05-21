@@ -16,7 +16,8 @@ def move_to_action(move, player):
     rel_action = REL_ACTION_MAP.to_action(dx, dy, move.promotion)
     return relative_to_absolute_action(x1, y1, rel_action)
 
-def action_to_move(action, player, board):
+def action_to_move(action, board):
+    player = 1 if board.turn else -1
     x1, y1, rel_action = absolute_to_relative_action(action)
     dx, dy, underpromo = REL_ACTION_MAP.from_action(rel_action)
     x2, y2 = x1 + dx, y1 + dy

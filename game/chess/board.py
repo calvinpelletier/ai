@@ -21,7 +21,9 @@ PIECES_PER_SIDE = 6
 N_PIECE_VALUES = 1 + 2 * PIECES_PER_SIDE
 
 
-def board_to_neural(board, player):
+def board_to_neural(board, player=None):
+    if player is None: player = 1 if board.turn else -1 
+
     neural = np.zeros(BOARD_SHAPE, dtype=np.int8)
 
     for square, piece in board.piece_map().items():

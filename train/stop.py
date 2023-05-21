@@ -18,7 +18,7 @@ class EarlyStopper:
         x = (s._vals[0] - s._vals[-1]) / s._vals[0]
         stop = x < s._improvement
         if stop:
-            print('[INFO] early stopping (improvement {:.2f} < {:.2f})'.format(
+            print('[INFO] early stopping (improvement {:.4f} < {:.4f})'.format(
                 x,
                 s._improvement,
             ))

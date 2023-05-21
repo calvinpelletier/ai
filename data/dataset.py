@@ -101,7 +101,7 @@ class Dataset:
         return ret
         # ~
 
-    def sample(s, n: int, device: str = 'cuda'):
+    def sample(s, n: int, device: str = 'cuda', random: bool = False):
         '''Load n samples.
 
         ARGS
@@ -112,7 +112,7 @@ class Dataset:
             tensor[n, ...] or list/dict of tensor[n, ...]
         '''
 
-        return next(iter(s.iterator(n, device)))
+        return next(iter(s.iterator(n, device, train=random)))
 
     def iterator(s,
         batch_size: int,
