@@ -3,9 +3,10 @@ from functools import partial
 from typing import Any, Optional, Iterable, Callable
 import wandb
 
-from ai.util.logger import Tensorboard
-from ai.train.hook import Hook
 from ai.lab.base import LabEntity
+from ai.train.hook import Hook
+from ai.util.config import Config
+from ai.util.logger import Tensorboard
 from ai.util.schedule import Logarithmic, ScheduleConfig
 
 

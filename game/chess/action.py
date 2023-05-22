@@ -1,4 +1,5 @@
 import chess
+import numpy as np
 
 from ai.game.chess.action_map import RelActionMap
 from ai.game.chess.util import move_to_coords, coords_to_move

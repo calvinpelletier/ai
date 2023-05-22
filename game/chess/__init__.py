@@ -1,6 +1,7 @@
 from ai.game.chess.action import (
     move_to_action,
     action_to_move,
+    legal_mask,
     REL_ACTION_SIZE,
     ACTION_SIZE,
 )
