@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 from typing import Optional, Union, List
+import einops
 
 
 def resample(scale: Union[int, float]):
@@ -97,6 +98,18 @@ class Flatten(nn.Module):
 
 def flatten(*a, **kw):
     return Flatten(*a, **kw)
+
+
+class Rearrange(nn.Module):
+    def __init__(s, rearrangement):
+        super().__init__()
+        s._rearrangement = rearrangement
+
+    def forward(s, x):
+        return einops.rearrange(x, s._rearrangement)
+
+def rearrange(*a, **kw):
+    return Rearrange(*a, **kw)
 
 
 class Blur(nn.Module):

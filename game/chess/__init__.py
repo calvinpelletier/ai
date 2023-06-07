@@ -18,3 +18,4 @@ from ai.game.chess.board import (
     PIECE_IDX,
     CASTLE_EP_IDX,
 )
+from ai.game.chess.util import eq_boards

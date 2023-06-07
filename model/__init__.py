@@ -5,7 +5,7 @@ from ai.model.alias import embed, lstm, modules, rearrange, module_dict, null
 from ai.model.attention import attn, sa, tx_enc, tx_enc_blk
 from ai.model.conv2d import conv
 from ai.model.diffusion import DiffusionModel
-from ai.model.etc import resample, res, clamp, global_avg, flatten, blur
+from ai.model.etc import resample, res, clamp, global_avg, flatten, blur, rearrange
 from ai.model.linear import fc
 from ai.model.modulate import modconv, modresblk
 from ai.model.module import Model, Module
