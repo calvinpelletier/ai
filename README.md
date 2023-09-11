@@ -148,6 +148,7 @@ class MyModel(m.Model):
             m.fc(8, 8),
         ))
 model = MyModel()
+
 # or simply:
 model = m.Model(m.seq(m.flatten(), m.fc(8, 8)))
 
