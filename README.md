@@ -1,8 +1,6 @@
-# [WIP] Unnamed AI Library
+# Unnamed AI Library
 
 A PyTorch-based machine learning library designed for quick and easy experimentation with a variety of ML concepts.
-
-Full API reference coming soon.
 
 ## Examples
 
