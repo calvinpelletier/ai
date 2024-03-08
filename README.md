@@ -64,14 +64,101 @@ python ai/examples/mnist/main.py /tmp/mnist --device=cpu
 
 ## Table of Contents
 
-- [Model](#model)
+- [Infer](#infer)
 - [Train](#train)
+- [Model](#model)
 - [Data](#data)
 - [Lab](#lab)
-- [Infer](#infer)
 - [Game](#game)
 - [Task](#task)
 - [Util](#util)
+
+# Infer
+
+The `ai.infer` module can be used to setup inference workers and clients.
+
+```python
+inferencer = ai.infer.Inferencer(model) # launch inference worker
+y = inferencer(x) # call worker
+del inferencer # stop worker
+```
+
+A more detailed example:
+
+```python
+import ai
+
+# using an MNIST model as an example
+model = ai.examples.mnist.Model().init()
+
+# spawn a worker process
+inferencer = ai.infer.Inferencer(
+    model,
+    'cuda', # the worker will move the model to this device
+    64, # the maximum inference batch size (will be less if there arent
+        # sufficient requests available at the moment)
+)
+
+# the inferencer can be used as if it is the model
+x = torch.randn(1, 1, 28, 28)
+y1 = model(x)
+y2 = inferencer(x)
+assert (y1 == y2).all()
+
+# update the parameters of the worker's model
+inferencer.update_params(model.state_dict())
+
+# you can also create an InferencerClient which can make inference requests but
+# doesn't hold a reference to the worker (useful when passing it to other
+# processes e.g. when data workers need to make inference requests)
+client = inferencer.create_client()
+y = client(x)
+
+# requests can be made asynchronously
+request_id = client.infer_async(x)
+y = client.wait_for_resp(request_id)
+
+# you can stop the worker directly via
+del inferencer
+# or you can just let `inferencer` go out of scope
+```
+
+For more information, see [Inferencer](infer/inferencer.py) and [InferenceClient](infer/client.py).
+
+# Train
+
+This is the simplest way to train a model:
+```python
+import ai
+
+ai.Trainer(env, data).train(model, opt, hook)
+```
+Where `env` is a callable that calculates the loss, `data` is an iterable that produces batches of training data, `opt` is the optimizer, and `hook` is an optional function called after every training step.
+
+There are five main parts to the `ai.train` module: trainers, environments, hooks, optimizers, and loss functions.
+
+### Trainers
+
+Trainers loop over a data iterator, call the environment, backprop the loss, and step the optimizer. They have two methods: `.train()` and `.validate()`. There are currently 2 trainers:
+
+1) `Trainer`
+2) `MultiTrainer` for training multiple models simultaneously as they interact with each other.
+
+### Training Environments
+
+A training environement is a callable that takes 3 arguments (the model, a batch of data, and the current step number) and returns a loss value. For multi-training, it takes 4 arguments (the current phase, a dict of models, a batch of data, and the step number). See [ai/train/env/diffusion.py](train/env/diffusion.py) for an example of an environment, and [ai/train/env/gan.py](train/env/gan.py) for an example of a multi-training environment.
+
+### Training Hooks
+
+Training hooks handle everything not directly responsible for model training (logging, validation, saving snapshots, saving samples, running evaluation tasks, checking for early stopping, etc.). The trainer calls the hook at the beginning of every training step. The simplest way to use them is to create one from a `Trial` object (discussed in the "Lab" section), or you can implement your own by extending `ai.train.HookInterface`. See [ai/train/hook.py](train/hook.py) for more info.
+
+### Optimizers
+
+Optimizers created via `ai.train.opt` (or simply `ai.opt`) are essentially just torch optimizers plus optional gradient clipping. There's also some QoL stuff like `ai.opt.build` which creates an optimizer from a `Config` object.
+
+### Loss functions
+
+`ai.train.loss` (or `ai.loss`) is still in the early phase of development but it has a few useful loss functions like `ai.loss.PerceptualLoss` for LPIPS or traditional perceptual loss, and `ai.loss.ComboLoss` for doing weighted sums of multiple losses.
 
 # Model
 
@@ -172,14 +259,7 @@ model.init('/path/to/model/weights.pt') # from disk
 
 ### Model Examples
 
-MNIST MLP (and the pure PyTorch equivalent on the right):
-
-<table>
-<tr>
-<td> ai.model </td> <td> torch.nn </td>
-</tr>
-<tr>
-<td>
+MNIST MLP:
 
 ```python
 import ai.model as m
@@ -198,38 +278,6 @@ model = FullyConnected().init() # randomly init params
 # or
 model = FullyConnected().init(some_path) # load params from disk
 ```
-
-</td>
-<td>
-
-```python
-import torch
-from torch import nn
-from math import prod
-
-class FullyConnected(nn.Module):
-    def __init__(self, shape_in=[1, 28, 28], n_out=10, dim=128, n_layers=4):
-        super().__init__()
-        layers = [nn.Linear(prod(shape_in), dim), nn.ReLU()]
-        for _ in range(n_layers):
-            layers.append(nn.Linear(dim, dim))
-            layers.append(nn.ReLU())
-        layers.append(nn.Linear(dim, n_out))
-        self._net = nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self._net(torch.flatten(x, 1))
-
-model = FullyConnected()
-
-model.apply(some_param_init_fn) # randomly init params
-# or
-model.load_state_dict(torch.load(some_path)) # load params from disk
-```
-
-</td>
-</tr>
-</table>
 
 Image autoencoder using ResNet blocks:
 
@@ -269,41 +317,6 @@ Transformer example: [Vision Transformer](examples/vit/model.py)
 RL example: [MuZero MLP](examples/muzero/model.py)
 
 Diffusion example: [Diffusion MLP](examples/diffusion/model.py)
-
-# Train
-
-This is the simplest way to train a model:
-```python
-import ai
-
-ai.Trainer(env, data).train(model, opt)
-```
-Where `env` is a callable that calculates the loss, `data` is an iterable that produces batches of training data, and `opt` is the optimizer.
-
-There are five main parts to the `ai.train` module: trainers, environments, hooks, optimizers, and loss functions.
-
-### Trainers
-
-Trainers loop over a data iterator, call the environment, backprop the loss, and step the optimizer. They have two methods: `.train()` and `.validate()`. There are currently 2 trainers:
-
-1) `Trainer`
-2) `MultiTrainer` for training multiple models simultaneously as they interact with each other.
-
-### Training Environments
-
-A training environement is a callable that takes 3 arguments (the model, a batch of data, and the current step number) and returns a loss value. For multi-training, it takes 4 arguments (the current phase, a dict of models, a batch of data, and the step number). See [ai/train/env/diffusion.py](train/env/diffusion.py) for an example of an environment, and [ai/train/env/gan.py](train/env/gan.py) for an example of a multi-training environment.
-
-### Training Hooks
-
-Training hooks handle everything not directly responsible for model training (logging, validation, saving snapshots, saving samples, running evaluation tasks, checking for early stopping, etc.). The trainer calls the hook at the beginning of every training step. The simplest way to use them is to create one from a `Trial` object (discussed in the "Lab" section), or you can implement your own by extending `ai.train.HookInterface`. See [ai/train/hook.py](train/hook.py) for more info.
-
-### Optimizers
-
-Optimizers created via `ai.train.opt` (or simply `ai.opt`) are essentially just torch optimizers plus optional gradient clipping. There's also some QoL stuff like `ai.opt.build` which creates an optimizer from a `Config` object.
-
-### Loss functions
-
-`ai.train.loss` (or `ai.loss`) is still in the early phase of development but it has a few useful loss functions like `ai.loss.PerceptualLoss` for LPIPS or traditional perceptual loss, and `ai.loss.ComboLoss` for doing weighted sums of multiple losses.
 
 # Data
 
@@ -537,58 +550,6 @@ ai.util.save_img_grid(study.path / 'comparison.png', comparison)
 ```
 
 See [ai/examples/imsim](examples/imsim/main.py).
-
-# Infer
-
-The `ai.infer` module can be used to setup inference workers and clients.
-
-```python
-inferencer = ai.infer.Inferencer(model) # launch inference worker
-y = inferencer(x) # call worker
-del inferencer # stop worker
-```
-
-A more detailed example:
-
-```python
-import ai
-
-# using an MNIST model as an example
-model = ai.examples.mnist.Model().init()
-
-# spawn a worker process
-inferencer = ai.infer.Inferencer(
-    model,
-    'cuda', # the worker will move the model to this device
-    64, # the maximum inference batch size (will be less if there arent
-        # sufficient requests available at the moment)
-)
-
-# the inferencer can be used as if it is the model
-x = torch.randn(1, 1, 28, 28)
-y1 = model(x)
-y2 = inferencer(x)
-assert (y1 == y2).all()
-
-# update the parameters of the worker's model
-inferencer.update_params(model.state_dict())
-
-# you can also create an InferencerClient which can make inference requests but
-# doesn't hold a reference to the worker (useful when passing it to other
-# processes e.g. when data workers need to make inference requests)
-client = inferencer.create_client()
-y = client(x)
-
-# requests can be made asynchronously
-request_id = client.infer_async(x)
-y = client.wait_for_resp(request_id)
-
-# you can stop the worker directly via
-del inferencer
-# or you can just let `inferencer` go out of scope
-```
-
-For more information, see [Inferencer](infer/inferencer.py) and [InferenceClient](infer/client.py).
 
 # Game 
 
