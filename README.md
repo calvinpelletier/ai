@@ -23,7 +23,7 @@ model = ai.Model(m.seq(
 # dataset
 train_ds, val_ds = ai.data.mnist().split()
 
-# logging, validation, etc.
+# trial (see "Lab" section of README)
 trial = ai.Trial(outpath, val_data=val_ds.iterator(batch_size, device))
 
 ai.Trainer(
@@ -32,7 +32,7 @@ ai.Trainer(
 ).train(
     model.init().to(device), # model
     ai.opt.Adam(model, lr=1e-3), # optimizer
-    trial.hook(), # training hook
+    trial.hook(), # logging, validation, etc.
     timelimit=10,
 )
 ```
