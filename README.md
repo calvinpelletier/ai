@@ -62,66 +62,14 @@ python ai/examples/mnist/main.py /tmp/mnist --device=cpu
 
 ## Table of Contents
 
-- [Infer](#infer)
 - [Train](#train)
 - [Model](#model)
+- [Infer](#infer)
 - [Data](#data)
 - [Lab](#lab)
 - [Game](#game)
 - [Task](#task)
 - [Util](#util)
-
-# Infer
-
-The `ai.infer` module can be used to setup inference workers and clients.
-
-```python
-inferencer = ai.infer.Inferencer(model) # launch inference worker
-y = inferencer(x) # call worker
-del inferencer # stop worker
-```
-
-A more detailed example:
-
-```python
-import ai
-
-# using an MNIST model as an example
-model = ai.examples.mnist.Model().init()
-
-# spawn a worker process
-inferencer = ai.infer.Inferencer(
-    model,
-    'cuda', # the worker will move the model to this device
-    64, # the maximum inference batch size (will be less if there arent
-        # sufficient requests available at the moment)
-)
-
-# the inferencer can be used as if it is the model
-x = torch.randn(1, 1, 28, 28)
-y1 = model(x)
-y2 = inferencer(x)
-assert (y1 == y2).all()
-
-# update the parameters of the worker's model
-inferencer.update_params(model.state_dict())
-
-# you can also create an InferencerClient which can make inference requests but
-# doesn't hold a reference to the worker (useful when passing it to other
-# processes e.g. when data workers need to make inference requests)
-client = inferencer.create_client()
-y = client(x)
-
-# requests can be made asynchronously
-request_id = client.infer_async(x)
-y = client.wait_for_resp(request_id)
-
-# you can stop the worker directly via
-del inferencer
-# or you can just let `inferencer` go out of scope
-```
-
-For more information, see [Inferencer](infer/inferencer.py) and [InferenceClient](infer/client.py).
 
 # Train
 
@@ -315,6 +263,58 @@ Transformer example: [Vision Transformer](examples/vit/model.py)
 RL example: [MuZero MLP](examples/muzero/model.py)
 
 Diffusion example: [Diffusion MLP](examples/diffusion/model.py)
+
+# Infer
+
+The `ai.infer` module can be used to setup inference workers and clients.
+
+```python
+inferencer = ai.infer.Inferencer(model) # launch inference worker
+y = inferencer(x) # call worker
+del inferencer # stop worker
+```
+
+A more detailed example:
+
+```python
+import ai
+
+# using an MNIST model as an example
+model = ai.examples.mnist.Model().init()
+
+# spawn a worker process
+inferencer = ai.infer.Inferencer(
+    model,
+    'cuda', # the worker will move the model to this device
+    64, # the maximum inference batch size (will be less if there arent
+        # sufficient requests available at the moment)
+)
+
+# the inferencer can be used as if it is the model
+x = torch.randn(1, 1, 28, 28)
+y1 = model(x)
+y2 = inferencer(x)
+assert (y1 == y2).all()
+
+# update the parameters of the worker's model
+inferencer.update_params(model.state_dict())
+
+# you can also create an InferencerClient which can make inference requests but
+# doesn't hold a reference to the worker (useful when passing it to other
+# processes e.g. when data workers need to make inference requests)
+client = inferencer.create_client()
+y = client(x)
+
+# requests can be made asynchronously
+request_id = client.infer_async(x)
+y = client.wait_for_resp(request_id)
+
+# you can stop the worker directly via
+del inferencer
+# or you can just let `inferencer` go out of scope
+```
+
+For more information, see [Inferencer](infer/inferencer.py) and [InferenceClient](infer/client.py).
 
 # Data
 
