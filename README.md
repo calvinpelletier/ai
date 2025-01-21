@@ -47,12 +47,10 @@ More examples: [ai/examples](examples)
 
 `pip` package coming soon. In the meantime:
 
-Ubuntu:
+Linux:
 ```bash
 git clone https://github.com/calvinpelletier/ai.git
 
-sudo apt update
-sudo apt install python3.9-venv
 python3.9 -m venv ./ai/.venv
 source ./ai/.venv/bin/activate
 pip install -r ai/requirements.txt
